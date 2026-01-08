@@ -73,7 +73,7 @@ class _TransaksiPageState extends State<TransaksiPage> {
           Padding(
             padding: const EdgeInsets.all(12),
             child: DropdownButtonFormField<String>(
-              value: selectedPelanggan,
+              initialValue: selectedPelanggan,
               items: DummyData.pelanggan
                   .map<DropdownMenuItem<String>>(
                     (p) => DropdownMenuItem<String>(

@@ -33,7 +33,7 @@ class _RiwayatTransaksiPageState extends State<RiwayatTransaksiPage> {
           Padding(
             padding: const EdgeInsets.all(12),
             child: DropdownButtonFormField<String>(
-              value: selectedPelanggan,
+              initialValue: selectedPelanggan,
               items: pelangganList
                   .map<DropdownMenuItem<String>>(
                     (String p) => DropdownMenuItem<String>(

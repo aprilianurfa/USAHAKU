@@ -3,7 +3,7 @@ import '../../core/dummy_data.dart';
 
 class FormBarangPage extends StatefulWidget {
   // ❌ HAPUS const
-  FormBarangPage({super.key});
+  const FormBarangPage({super.key});
 
   @override
   State<FormBarangPage> createState() => _FormBarangPageState();
@@ -38,7 +38,7 @@ class _FormBarangPageState extends State<FormBarangPage> {
 
               // ✅ FIX GENERIC DROPDOWN
               DropdownButtonFormField<String>(
-                value: selectedKategori,
+                initialValue: selectedKategori,
                 items: DummyData.kategori
                     .map<DropdownMenuItem<String>>(
                       (k) => DropdownMenuItem<String>(

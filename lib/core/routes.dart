@@ -15,7 +15,7 @@ import '../pages/barang/pembelian_page.dart';
 // TRANSAKSI
 import '../pages/transaksi/transaksi_page.dart';
 import '../pages/transaksi/riwayat_transaksi_page.dart';
-
+import '../pages/transaksi/printer_page.dart';
 // LAPORAN
 import '../pages/laporan/laporan_ringkasan.dart';
 import '../pages/laporan/laporan_penjualan.dart';
@@ -32,8 +32,8 @@ class AppRoutes {
     '/login': (context) => const LoginPage(),
     '/register': (context) => const RegisterPage(),
 
-    // DASHBOARD
-    '/dashboard': (context) => const DashboardPage(),
+    // DASHBOARD - HAPUS 'const' DI SINI
+    '/dashboard': (context) => DashboardPage(),
 
     // BARANG & STOK
     '/barang': (context) => const BarangPage(),
@@ -43,6 +43,8 @@ class AppRoutes {
     // TRANSAKSI
     '/transaksi': (context) => const TransaksiPage(),
     '/riwayat-transaksi': (context) => const RiwayatTransaksiPage(),
+    // Di dalam AppRoutes.routes
+    '/printer-setting': (context) => PrinterPage(),
 
     // LAPORAN
     '/laporan': (context) => const LaporanRingkasanPage(),
