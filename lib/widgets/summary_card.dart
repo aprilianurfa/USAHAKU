@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+
 
 class SummaryCard extends StatelessWidget {
   final String title;
-  final int value;
+  final String value;
   final IconData icon;
 
   const SummaryCard({
@@ -15,12 +15,7 @@ class SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currency = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp ',
-      decimalDigits: 0,
-    );
-
+    // Number formatting moved to parent or checks type
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -40,7 +35,7 @@ class SummaryCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  currency.format(value),
+                  value, // Directly use string
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

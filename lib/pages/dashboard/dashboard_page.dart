@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../core/theme.dart';
 
 class DashboardPage extends StatefulWidget {
   DashboardPage({Key? key}) : super(key: key);
@@ -24,7 +25,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FE), 
+      backgroundColor: AppTheme.backgroundColor, 
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -95,7 +96,7 @@ class _DashboardPageState extends State<DashboardPage> {
           height: 360, 
           width: double.infinity,
           decoration: const BoxDecoration(
-            color: Color(0xFF1A46BE),
+            color: AppTheme.primaryColor,
             borderRadius: BorderRadius.only(
               bottomLeft: Radius.circular(40),
               bottomRight: Radius.circular(40),
@@ -114,7 +115,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     child: const CircleAvatar(
                       radius: 28,
                       backgroundColor: Colors.white,
-                      child: Icon(Icons.person_rounded, size: 32, color: Color(0xFF1A46BE)),
+                      child: Icon(Icons.person_rounded, size: 32, color: AppTheme.primaryColor),
                     ),
                   ),
                   const SizedBox(width: 15),
