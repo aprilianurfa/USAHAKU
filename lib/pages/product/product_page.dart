@@ -129,7 +129,7 @@ class _BarangPageState extends State<BarangPage> {
               color: primaryColor,
               borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30)),
             ),
-            padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 10, 16, 20),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
             child: Column(
               children: [
                 TextField(

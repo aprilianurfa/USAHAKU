@@ -14,9 +14,18 @@ class TransactionService {
     }
   }
 
-  Future<List<Transaksi>> getTransactions() async {
+  Future<List<Transaksi>> getTransactions({DateTime? startDate, DateTime? endDate, String? namaPelanggan}) async {
     try {
-      final response = await _dio.get('/transactions');
+      Map<String, dynamic> queryParams = {};
+      if (startDate != null && endDate != null) {
+        queryParams['startDate'] = startDate.toIso8601String();
+        queryParams['endDate'] = endDate.toIso8601String();
+      }
+      if (namaPelanggan != null && namaPelanggan != 'Semua') {
+        queryParams['namaPelanggan'] = namaPelanggan;
+      }
+
+      final response = await _dio.get('/transactions', queryParameters: queryParams);
       if (response.statusCode == 200) {
         List<dynamic> data = response.data;
         return data.map((json) => Transaksi.fromMap(json)).toList();
@@ -24,6 +33,18 @@ class TransactionService {
       return [];
     } catch (e) {
       throw Exception('Gagal memuat riwayat transaksi: $e');
+    }
+  }
+
+  Future<List<String>> getCustomerNames() async {
+    try {
+      final response = await _dio.get('/transactions/customers');
+      if (response.statusCode == 200) {
+        return List<String>.from(response.data);
+      }
+      return [];
+    } catch (e) {
+      throw Exception('Gagal memuat daftar pelanggan: $e');
     }
   }
 }

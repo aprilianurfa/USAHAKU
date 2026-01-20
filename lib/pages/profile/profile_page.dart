@@ -209,7 +209,7 @@ class _ProfilePageState extends State<ProfilePage> {
       alignment: Alignment.center,
       children: [
         Container(
-          height: 280,
+          height: 310,  // Increased from 280 to prevent overflow
           width: double.infinity,
           decoration: BoxDecoration(
             color: AppTheme.primaryColor,
@@ -223,6 +223,26 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Column(
               children: [
                 const SizedBox(height: 20),
+                // Standardized Back Button
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_back, color: Colors.white),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ),
+                      const Spacer(),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
                 Container(
                   padding: const EdgeInsets.all(4),
                   decoration: const BoxDecoration(
@@ -258,16 +278,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
         ),
-        Positioned(
-          top: 0,
-          left: 0,
-          child: SafeArea(
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-        ),
+
         Positioned(
           bottom: -40,
           left: 24,

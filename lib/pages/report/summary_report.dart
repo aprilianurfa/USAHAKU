@@ -39,116 +39,152 @@ class _LaporanRingkasanPageState extends State<LaporanRingkasanPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      appBar: AppBar(
-        backgroundColor: AppTheme.primaryColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('Pusat Laporan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        centerTitle: true,
-      ),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator())
-        : ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              // HEADER CARD
-              Container(
-                padding: const EdgeInsets.all(25),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(25),
-                  boxShadow: [
-                    BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))
-                  ]
-                ),
-                child: Column(
+      body: Column(
+        children: [
+          _buildHeader(),
+          Expanded(
+            child: _isLoading 
+              ? const Center(child: CircularProgressIndicator())
+              : ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
                   children: [
-                    const Text("Penjualan Hari Ini", style: TextStyle(color: Colors.white70, fontSize: 14)),
-                    const SizedBox(height: 10),
-                    Text(
-                      _formatRupiah(_summaryData['salesToday']),
-                      style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                    // HEADER CARD
+                    Container(
+                      padding: const EdgeInsets.all(25),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(25),
+                        boxShadow: [
+                          BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 8))
+                        ]
+                      ),
+                      child: Column(
+                        children: [
+                          const Text("Penjualan Hari Ini", style: TextStyle(color: Colors.white70, fontSize: 14)),
+                          const SizedBox(height: 10),
+                          Text(
+                            _formatRupiah(_summaryData['salesToday']),
+                            style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildStatItem(Icons.receipt_long, "${_summaryData['trxCountToday']} Transaksi"),
+                              Container(height: 20, width: 1, color: Colors.white30, margin: const EdgeInsets.symmetric(horizontal: 15)),
+                              _buildStatItem(Icons.trending_up, "Profit: ask owner"),
+                            ],
+                          )
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+
+                    const SizedBox(height: 30),
+                    
+                    // MENU GRID
+                    const Text("Menu Laporan", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                    const SizedBox(height: 15),
+                    
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 15,
+                      mainAxisSpacing: 15,
+                      childAspectRatio: 1.3,
                       children: [
-                        _buildStatItem(Icons.receipt_long, "${_summaryData['trxCountToday']} Transaksi"),
-                        Container(height: 20, width: 1, color: Colors.white30, margin: const EdgeInsets.symmetric(horizontal: 15)),
-                        _buildStatItem(Icons.trending_up, "Profit: ask owner"),
+                         _buildReportCard(
+                           context, 
+                           "Laporan Penjualan", 
+                           Icons.bar_chart_rounded, 
+                           Colors.blue, 
+                           '/sales-report'
+                         ),
+                         _buildReportCard(
+                           context, 
+                           "Riwayat Transaksi", 
+                           Icons.history_edu_rounded, 
+                           Colors.purple, 
+                           '/transaction-report'
+                         ),
+                         _buildReportCard(
+                           context, 
+                           "Laporan Laba Rugi", 
+                           Icons.pie_chart_rounded, 
+                           Colors.green, 
+                           '/profit-loss-report'
+                         ),
+                         _buildReportCard(
+                           context, 
+                           "Arus Kas", 
+                           Icons.account_balance_wallet_rounded, 
+                           Colors.orange, 
+                           '/cash-flow-report'
+                         ),
+                         _buildReportCard(
+                           context, 
+                           "Produk Terlaris", 
+                           Icons.star_rounded, 
+                           Colors.amber.shade700, 
+                           '/product-sales-report'
+                         ),
+                         _buildReportCard(
+                           context, 
+                           "Analisa Pengunjung", 
+                           Icons.people_alt_rounded, 
+                           Colors.teal, 
+                           '/visitor-report'
+                         ),
                       ],
                     )
                   ],
                 ),
-              ),
-
-              const SizedBox(height: 30),
-              
-              // MENU GRID
-              const Text("Menu Laporan", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
-              const SizedBox(height: 15),
-              
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                crossAxisSpacing: 15,
-                mainAxisSpacing: 15,
-                childAspectRatio: 1.3,
-                children: [
-                   _buildReportCard(
-                     context, 
-                     "Laporan Penjualan", 
-                     Icons.bar_chart_rounded, 
-                     Colors.blue, 
-                     '/sales-report'
-                   ),
-                   _buildReportCard(
-                     context, 
-                     "Riwayat Transaksi", 
-                     Icons.history_edu_rounded, 
-                     Colors.purple, 
-                     '/transaction-report'
-                   ),
-                   _buildReportCard(
-                     context, 
-                     "Laporan Laba Rugi", 
-                     Icons.pie_chart_rounded, 
-                     Colors.green, 
-                     '/profit-loss-report'
-                   ),
-                   _buildReportCard(
-                     context, 
-                     "Arus Kas", 
-                     Icons.account_balance_wallet_rounded, 
-                     Colors.orange, 
-                     '/cash-flow-report'
-                   ),
-                   _buildReportCard(
-                     context, 
-                     "Produk Terlaris", 
-                     Icons.star_rounded, 
-                     Colors.amber.shade700, 
-                     '/product-sales-report'
-                   ),
-                   _buildReportCard(
-                     context, 
-                     "Analisa Pengunjung", 
-                     Icons.people_alt_rounded, 
-                     Colors.teal, 
-                     '/visitor-report'
-                   ),
-                ],
-              )
-            ],
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 10, 16, 20),
+      decoration: const BoxDecoration(
+        color: AppTheme.primaryColor,
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          const Expanded(
+            child: Text(
+              'Pusat Laporan',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 48),
+        ],
+      ),
     );
   }
 
