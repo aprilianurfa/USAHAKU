@@ -1,64 +1,193 @@
 import 'package:flutter/material.dart';
-import '../../models/transaction_model.dart';
-import '../../services/transaction_service.dart';
-import '../../widgets/summary_card.dart';
+import '../../core/dummy_data.dart';
 
-class LaporanPenjualanPage extends StatefulWidget {
-  const LaporanPenjualanPage({super.key});
+enum SortMode { terbanyak, tersedikit }
+
+class LaporanPenjualanBarangPage extends StatefulWidget {
+  const LaporanPenjualanBarangPage({super.key});
 
   @override
-  State<LaporanPenjualanPage> createState() => _LaporanPenjualanPageState();
+  State<LaporanPenjualanBarangPage> createState() =>
+      _LaporanPenjualanBarangPageState();
 }
 
-class _LaporanPenjualanPageState extends State<LaporanPenjualanPage> {
-  final TransactionService _transactionService = TransactionService();
-  late Future<List<Transaksi>> _futureData;
+class _LaporanPenjualanBarangPageState
+    extends State<LaporanPenjualanBarangPage> {
+  String keyword = '';
+  SortMode sortMode = SortMode.terbanyak;
 
-  @override
-  void initState() {
-    super.initState();
-    _futureData = _transactionService.getTransactions();
+  /// ================= HITUNG TOTAL TERJUAL PER BARANG =================
+  int totalTerjual(String namaBarang) {
+    int total = 0;
+    for (var trx in DummyData.transaksi) {
+      for (var item in trx['items']) {
+        if (item['nama'] == namaBarang) {
+          total += item['qty'] as int;
+        }
+      }
+    }
+    return total;
   }
 
   @override
   Widget build(BuildContext context) {
+    // ================= DATA BARANG + TERJUAL =================
+    final List<Map<String, dynamic>> data = DummyData.barang.map((b) {
+      final terjual = totalTerjual(b['nama']);
+      return {
+        ...b,
+        'terjual': terjual,
+      };
+    }).toList();
+
+    // ================= SEARCH =================
+    final filtered = data.where((b) {
+      return b['nama']
+          .toString()
+          .toLowerCase()
+          .contains(keyword.toLowerCase());
+    }).toList();
+
+    // ================= SORT =================
+    filtered.sort((a, b) => sortMode == SortMode.terbanyak
+        ? b['terjual'].compareTo(a['terjual'])
+        : a['terjual'].compareTo(b['terjual']));
+
+    final int maxTerjual =
+        filtered.isEmpty ? 0 : filtered.first['terjual'];
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Ringkasan Penjualan')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: FutureBuilder<List<Transaksi>>(
-          future: _futureData,
-          builder: (context, snapshot) {
-             if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-             }
-             
-             int totalPenjualan = 0;
-             int jumlahTransaksi = 0;
-
-             if (snapshot.hasData) {
-               jumlahTransaksi = snapshot.data!.length;
-               for (var t in snapshot.data!) {
-                 totalPenjualan += t.totalBayar;
-               }
-             }
-
-             return Column(
+      appBar: AppBar(
+        title: const Text('Laporan Penjualan per Barang'),
+      ),
+      body: Column(
+        children: [
+          // ================= FILTER BOX =================
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
               children: [
-                SummaryCard(
-                  title: 'Total Penjualan',
-                  value: 'Rp $totalPenjualan', 
-                  icon: Icons.payments,
+                // SEARCH
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Cari barang...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onChanged: (v) => setState(() => keyword = v),
                 ),
-                SummaryCard(
-                  title: 'Jumlah Transaksi',
-                  value: '$jumlahTransaksi',
-                  icon: Icons.receipt,
+                const SizedBox(height: 10),
+
+                // SORT
+                DropdownButtonFormField<SortMode>(
+                  value: sortMode,
+                  items: const [
+                    DropdownMenuItem(
+                      value: SortMode.terbanyak,
+                      child: Text('Penjualan Terbanyak'),
+                    ),
+                    DropdownMenuItem(
+                      value: SortMode.tersedikit,
+                      child: Text('Penjualan Tersedikit'),
+                    ),
+                  ],
+                  onChanged: (v) => setState(() => sortMode = v!),
+                  decoration: const InputDecoration(
+                    labelText: 'Urutkan',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
               ],
-            );
-          },
-        ),
+            ),
+          ),
+
+          const Divider(height: 1),
+
+          // ================= LIST =================
+          Expanded(
+            child: filtered.isEmpty
+                ? const Center(
+                    child: Text('Data tidak ditemukan'),
+                  )
+                : ListView.separated(
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, __) =>
+                        const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final b = filtered[index];
+                      final terjual = b['terjual'];
+
+                      final isTerlaris =
+                          terjual > 0 && terjual == maxTerjual;
+
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.blue.withOpacity(0.12),
+                          child: const Icon(
+                            Icons.inventory_2_rounded,
+                            color: Colors.blue,
+                          ),
+                        ),
+                        title: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                b['nama'],
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            if (isTerlaris)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  'Terlaris',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.orange,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        subtitle: Text(
+                          'Kategori: ${b['kategori']}',
+                        ),
+                        trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              terjual.toString(),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const Text(
+                              'Terjual',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
       ),
     );
   }
