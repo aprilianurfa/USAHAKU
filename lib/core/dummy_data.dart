@@ -70,7 +70,7 @@ class DummyData {
   ];
 
   // =======================
-  // DATA PEMBELIAN BARANG
+  // DATA PEMBELIAN
   // =======================
   static List<Map<String, dynamic>> pembelian = [
     {
@@ -82,17 +82,18 @@ class DummyData {
   ];
 
   // =======================
-  // DATA LAPORAN RINGKASAN
+  // DATA LAPORAN RINGKASAN (FIXED)
   // =======================
-  static Map<String, dynamic> laporanRingkasan = {
+  static Map<String, int> laporanRingkasan = {
     'penjualanHariIni': 500000,
     'jumlahTransaksi': 25,
+    'totalBiaya': 350000, // ✅ WAJIB ADA
     'labaBersih': 150000,
     'stokMenipis': 3,
   };
 
   // =======================
-  // DATA USER (LOGIN DUMMY)
+  // DATA USER
   // =======================
   static List<Map<String, dynamic>> users = [
     {
@@ -112,7 +113,7 @@ class DummyData {
   ];
 
   // =======================
-  // FUNGSI LOGIN
+  // LOGIN
   // =======================
   static Map<String, dynamic>? login(
     String email,
@@ -122,13 +123,13 @@ class DummyData {
       return users.firstWhere(
         (u) => u['email'] == email && u['password'] == password,
       );
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }
 
   // =======================
-  // FUNGSI REGISTER (DUMMY)
+  // REGISTER
   // =======================
   static void register({
     required String nama,
