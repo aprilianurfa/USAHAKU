@@ -1,4 +1,4 @@
-import 'transaksi_item.dart';
+import 'transaction_item_model.dart';
 
 class Transaksi {
   final String id;
@@ -23,16 +23,16 @@ class Transaksi {
 
   factory Transaksi.fromMap(Map<String, dynamic> map) {
     return Transaksi(
-      id: map['id'],
+      id: map['id'].toString(),
       tanggal: DateTime.parse(map['tanggal']),
-      pelangganId: map['pelangganId'],
-      namaPelanggan: map['namaPelanggan'],
-      items: (map['items'] as List)
-          .map((e) => TransaksiItem.fromMap(e))
-          .toList(),
-      totalBayar: map['totalBayar'],
-      bayar: map['bayar'],
-      kembalian: map['kembalian'],
+      pelangganId: map['pelanggan_id'] ?? map['pelangganId'] ?? 'GUEST',
+      namaPelanggan: map['nama_pelanggan'] ?? map['namaPelanggan'] ?? 'Umum',
+      items: (map['items'] as List?)
+              ?.map((e) => TransaksiItem.fromMap(e))
+              .toList() ?? [],
+      totalBayar: map['total_bayar'] ?? map['totalBayar'] ?? 0,
+      bayar: map['bayar'] ?? 0,
+      kembalian: map['kembalian'] ?? 0,
     );
   }
 
@@ -40,10 +40,10 @@ class Transaksi {
     return {
       'id': id,
       'tanggal': tanggal.toIso8601String(),
-      'pelangganId': pelangganId,
-      'namaPelanggan': namaPelanggan,
+      'pelanggan_id': pelangganId,
+      'nama_pelanggan': namaPelanggan,
       'items': items.map((e) => e.toMap()).toList(),
-      'totalBayar': totalBayar,
+      'total_bayar': totalBayar,
       'bayar': bayar,
       'kembalian': kembalian,
     };

@@ -1,5 +1,5 @@
 class AppConstants {
   // Ganti IP sesuai laptop kamu
-  static const String baseUrl = "http://localhost:3000/api";
-  static const String imageBaseUrl = "http://localhost:3000/";
+  static const String baseUrl = "http://192.168.1.24:3000/api";
+  static const String imageBaseUrl = "http://192.168.1.24:3000/";
 }

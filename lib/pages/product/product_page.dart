@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
-import '../../models/barang.dart';
-import '../../models/kategori.dart';
+import '../../models/product_model.dart';
+import '../../models/category_model.dart';
 import '../../services/product_service.dart';
 import '../../widgets/app_drawer.dart';
 import '../../config/constants.dart';
-import 'form_barang_page.dart';
+import 'product_form_page.dart';
 import 'package:intl/intl.dart';
 
 class BarangPage extends StatefulWidget {
@@ -64,11 +64,19 @@ class _BarangPageState extends State<BarangPage> {
 
   void _applyFilter() {
     setState(() {
+      print('Applying filter. Selected Category: $_selectedCategoryId');
       _filteredBarang = _allBarang.where((item) {
         final matchesSearch = item.nama.toLowerCase().contains(_searchQuery.toLowerCase());
         final matchesCategory = _selectedCategoryId == null || item.kategoriId == _selectedCategoryId;
+        
+        // Debug filtering
+        if (_selectedCategoryId != null && item.kategoriId != _selectedCategoryId) {
+           print('Filtered out: ${item.nama} (CatID: ${item.kategoriId}) vs Selected: $_selectedCategoryId');
+        }
+        
         return matchesSearch && matchesCategory;
       }).toList();
+      print('Filtered count: ${_filteredBarang.length}');
     });
   }
 
@@ -117,11 +125,11 @@ class _BarangPageState extends State<BarangPage> {
         children: [
           // Header & Search Bar
           Container(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
             decoration: BoxDecoration(
               color: primaryColor,
               borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30)),
             ),
+            padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 10, 16, 20),
             child: Column(
               children: [
                 TextField(
@@ -137,37 +145,38 @@ class _BarangPageState extends State<BarangPage> {
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
                   ),
                 ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    const Icon(Icons.inventory_2_outlined, color: Colors.white70, size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      "Total Produk: ${_allBarang.length}",
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                    if (_allBarang.length != _filteredBarang.length) ...[
+                      const Spacer(),
+                      Text(
+                        "Ditampilkan: ${_filteredBarang.length}",
+                        style: const TextStyle(color: Colors.white70, fontSize: 12),
+                      ),
+                    ],
+                  ],
+                ),
               ],
             ),
           ),
           
           // Filter Kategori (Horizontal List)
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 40,
+          Container(
+            height: 60,
+            padding: const EdgeInsets.symmetric(vertical: 10),
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
-                FilterChip(
-                  label: const Text("Semua"),
-                  selected: _selectedCategoryId == null,
-                  onSelected: (v) {
-                    setState(() => _selectedCategoryId = null);
-                    _applyFilter();
-                  },
-                ),
-                ..._categories.map((cat) => Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: FilterChip(
-                    label: Text(cat.nama),
-                    selected: _selectedCategoryId == cat.id,
-                    onSelected: (v) {
-                      setState(() => _selectedCategoryId = cat.id);
-                      _applyFilter();
-                    },
-                  ),
-                )),
+                _buildCategoryChip(null, "Semua"),
+                ..._categories.map((cat) => _buildCategoryChip(cat.id, cat.nama)),
               ],
             ),
           ),
@@ -198,7 +207,7 @@ class _BarangPageState extends State<BarangPage> {
       height: 55, // Tinggi tombol agar terlihat kokoh
       child: FloatingActionButton.extended(
         backgroundColor: AppTheme.primaryColor,
-        elevation: 4, // Memberikan bayangan halus
+        elevation: 0, // Flat design
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16), // Sudut membulat selaras tema
         ),
@@ -233,29 +242,35 @@ class _BarangPageState extends State<BarangPage> {
             MaterialPageRoute(
               builder: (_) => FormBarangPage(barang: item),
             ),
-          ).then((_) => _loadData());
+          ).then((result) { if (result == true) _loadData(); });
         },
         borderRadius: BorderRadius.circular(15),
         child: ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          leading: item.image != null && item.image!.isNotEmpty
-              ? Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    image: DecorationImage(
+          leading: Hero(
+            tag: item.id,
+            child: Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.grey.shade100,
+                image: item.image != null && item.image!.isNotEmpty
+                  ? DecorationImage(
                       image: NetworkImage('${AppConstants.imageBaseUrl}${item.image}'), 
                       fit: BoxFit.cover,
-                      onError: (e, s) => const Icon(Icons.broken_image),
-                    ),
-                  ),
-                )
-              : CircleAvatar(
-                  backgroundColor: isLow ? Colors.red.withOpacity(0.1) : primaryColor.withOpacity(0.1),
-                  child: Icon(Icons.inventory, color: isLow ? Colors.red : primaryColor),
-                ),
-          title: Text(item.nama, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      onError: (exception, stackTrace) {
+                        // Fallback logic handled by child
+                      },
+                    )
+                  : null,
+              ),
+              child: item.image == null || item.image!.isEmpty
+                ? Center(child: Icon(Icons.inventory_2_rounded, color: primaryColor.withOpacity(0.5), size: 30))
+                : null,
+            ),
+          ),
+          title: Text(item.nama, style: const TextStyle(fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -276,6 +291,34 @@ class _BarangPageState extends State<BarangPage> {
             ],
           ),
           trailing: const Icon(Icons.edit, size: 20), // Changed icon to indicate edit
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryChip(String? id, String label) {
+    bool isSelected = _selectedCategoryId == id;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        label: Text(label),
+        selected: isSelected,
+        onSelected: (bool selected) {
+          // Always select validation. If 'Semua' (null), allow.
+          setState(() {
+            _selectedCategoryId = id;
+            _applyFilter();
+          });
+        },
+        selectedColor: AppTheme.primaryColor,
+        labelStyle: TextStyle(
+          color: isSelected ? Colors.white : Colors.black87,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: isSelected ? BorderSide.none : const BorderSide(color: Colors.grey),
         ),
       ),
     );

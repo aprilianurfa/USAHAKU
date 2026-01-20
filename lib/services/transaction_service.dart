@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import '../core/api_client.dart';
-import '../models/transaksi.dart';
+import '../models/transaction_model.dart';
 
 class TransactionService {
   final Dio _dio = ApiClient().dio;

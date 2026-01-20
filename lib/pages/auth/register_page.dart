@@ -32,8 +32,9 @@ class _RegisterPageState extends State<RegisterPage> {
 
       setState(() => _isLoading = false);
 
-      if (result != null && (result['message'] != null || result['userId'] != null)) {
-        if (!mounted) return;
+      if (!mounted) return;
+
+      if (result != null && (result['message'] != null || result['userId'] != null || result['id'] != null)) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Registrasi berhasil, silakan login'),
@@ -42,10 +43,9 @@ class _RegisterPageState extends State<RegisterPage> {
         );
         Navigator.pop(context); // Kembali ke halaman Login
       } else {
-        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result['error'] ?? 'Registrasi gagal'),
+            content: Text(result['error'] ?? 'Registrasi gagal. Silakan coba lagi.'),
             backgroundColor: Colors.red,
           ),
         );

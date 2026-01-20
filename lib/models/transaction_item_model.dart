@@ -15,10 +15,10 @@ class TransaksiItem {
 
   factory TransaksiItem.fromMap(Map<String, dynamic> map) {
     return TransaksiItem(
-      barangId: map['barangId'],
-      namaBarang: map['namaBarang'],
-      harga: map['harga'],
-      qty: map['qty'],
+      barangId: (map['barangId'] ?? map['product_id'] ?? '').toString(),
+      namaBarang: map['namaBarang'] ?? map['nama_barang'] ?? 'Unknown',
+      harga: map['harga'] ?? 0,
+      qty: map['qty'] ?? 0,
     );
   }
 

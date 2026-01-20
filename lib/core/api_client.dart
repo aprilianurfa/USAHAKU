@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../config/constants.dart';
+import '../config/storage_config.dart';
 
 class ApiClient {
   final Dio dio = Dio(
@@ -15,8 +15,12 @@ class ApiClient {
   ApiClient() {
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        const storage = FlutterSecureStorage();
-        final token = await storage.read(key: 'token');
+        // Skip token check for auth endpoints to prevent unnecessary storage access
+        if (options.path.contains('/auth/login') || options.path.contains('/auth/register')) {
+          return handler.next(options);
+        }
+
+        final token = await StorageConfig.storage.read(key: 'token');
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }

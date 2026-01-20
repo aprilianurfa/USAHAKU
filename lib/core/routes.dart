@@ -6,25 +6,28 @@ import '../pages/auth/register_page.dart';
 
 // DASHBOARD
 import '../pages/dashboard/dashboard_page.dart';
+import '../pages/profile/profile_page.dart';
 
 // BARANG & PEMBELIAN
-import '../pages/barang/barang_page.dart';
-import '../pages/barang/kategori_page.dart';
-import '../pages/barang/pembelian_page.dart';
+import '../pages/product/product_page.dart';
+import '../pages/product/category_page.dart';
+import '../pages/product/purchase_page.dart';
 
 // TRANSAKSI
-import '../pages/transaksi/transaksi_page.dart';
-import '../pages/transaksi/riwayat_transaksi_page.dart';
-import '../pages/transaksi/printer_page.dart';
+import '../pages/transaction/transaction_page.dart';
+import '../pages/transaction/transaction_history_page.dart';
+import '../pages/transaction/printer_page.dart';
+import '../pages/report/product_sales_report.dart';
+import '../pages/report/transaction_report.dart';
+import '../pages/report/cash_flow_report.dart';
+import '../pages/report/expense_report.dart';
 // LAPORAN
-import '../pages/laporan/laporan_ringkasan.dart';
-import '../pages/laporan/laporan_penjualan.dart';
-import '../pages/laporan/laporan_laba_rugi.dart';
-import '../pages/laporan/laporan_arus_kas.dart';
-import '../pages/laporan/laporan_pembelian.dart';
-import '../pages/laporan/laporan_modal.dart';
-import '../pages/laporan/laporan_biaya.dart';
-import '../pages/laporan/laporan_pengunjung.dart';
+import '../pages/report/summary_report.dart';
+import '../pages/report/sales_report.dart';
+import '../pages/report/profit_loss_report.dart';
+import '../pages/report/purchase_report.dart';
+import '../pages/report/capital_report.dart';
+import '../pages/report/visitor_report.dart';
 
 class AppRoutes {
   static Map<String, WidgetBuilder> routes = {
@@ -34,26 +37,29 @@ class AppRoutes {
 
     // DASHBOARD - HAPUS 'const' DI SINI
     '/dashboard': (context) => DashboardPage(),
+    '/profile': (context) => const ProfilePage(),
 
     // BARANG & STOK
-    '/barang': (context) => const BarangPage(),
-    '/kategori': (context) => const KategoriPage(),
-    '/pembelian': (context) => const PembelianPage(),
+    '/product': (context) => const BarangPage(),
+    '/category': (context) => const KategoriPage(),
+    '/purchase': (context) => const PembelianPage(),
 
     // TRANSAKSI
-    '/transaksi': (context) => const TransaksiPage(),
-    '/riwayat-transaksi': (context) => const RiwayatTransaksiPage(),
+    '/transaction': (context) => const TransaksiPage(),
+    '/transaction-history': (context) => const RiwayatTransaksiPage(),
     // Di dalam AppRoutes.routes
     '/printer-setting': (context) => PrinterPage(),
 
     // LAPORAN
-    '/laporan': (context) => const LaporanRingkasanPage(),
-    '/laporan-penjualan': (context) => const LaporanPenjualanPage(),
-    '/laporan-laba-rugi': (context) => const LaporanLabaRugiPage(),
-    '/laporan-arus-kas': (context) => const LaporanArusKasPage(),
-    '/laporan-pembelian': (context) => const LaporanPembelianPage(),
-    '/laporan-modal': (context) => const LaporanModalPage(),
-    '/laporan-biaya': (context) => const LaporanBiayaPage(),
-    '/laporan-pengunjung': (context) => const LaporanPengunjungPage(),
+    '/report': (context) => const LaporanRingkasanPage(),
+    '/sales-report': (context) => const LaporanPenjualanPage(),
+    '/profit-loss-report': (context) => const LaporanLabaRugiPage(),
+    '/purchase-report': (context) => const LaporanPembelianPage(),
+    '/capital-report': (context) => const LaporanModalPage(),
+    '/visitor-report': (context) => const LaporanPengunjungPage(),
+    '/product-sales-report': (context) => const LaporanPenjualanBarangPage(),
+    '/transaction-report': (context) => const LaporanTransaksiPage(),
+    '/cash-flow-report': (context) => const LaporanArusKasPage(),
+    '/expense-report': (context) => const LaporanBiayaPage(),
   };
 }

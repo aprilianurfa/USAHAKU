@@ -1,9 +1,9 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
-import '../../models/barang.dart';
-import '../../models/kategori.dart';
+import '../../models/product_model.dart';
+import '../../models/category_model.dart';
 import '../../services/product_service.dart';
 import '../../config/constants.dart';
 
@@ -27,7 +27,8 @@ class _FormBarangPageState extends State<FormBarangPage> {
   late TextEditingController minStokController;
   late TextEditingController barcodeController;
   
-  File? _imageFile;
+  Uint8List? _imageBytes;
+  String? _imageFilename;
 
   List<Kategori> _categories = [];
   String? selectedKategoriId;
@@ -51,8 +52,10 @@ class _FormBarangPageState extends State<FormBarangPage> {
   Future<void> _pickImage() async {
     final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
+      final bytes = await pickedFile.readAsBytes();
       setState(() {
-        _imageFile = File(pickedFile.path);
+        _imageBytes = bytes;
+        _imageFilename = pickedFile.name;
       });
     }
   }
@@ -91,7 +94,7 @@ class _FormBarangPageState extends State<FormBarangPage> {
     }
   }
 
-  Future<void> _saveProduct() async {
+  Future<void> _showPreviewDialog() async {
     if (!_formKey.currentState!.validate()) return;
     if (selectedKategoriId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -100,6 +103,73 @@ class _FormBarangPageState extends State<FormBarangPage> {
       return;
     }
 
+    final categoryName = _categories.firstWhere((c) => c.id == selectedKategoriId).nama;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Review Simpan Barang'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  height: 100,
+                  width: 100,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    color: Colors.grey[200],
+                    image: _imageBytes != null
+                        ? DecorationImage(image: MemoryImage(_imageBytes!), fit: BoxFit.cover)
+                        : (widget.barang?.image != null
+                            ? DecorationImage(
+                                image: NetworkImage('${AppConstants.imageBaseUrl}${widget.barang!.image}'),
+                                fit: BoxFit.cover)
+                            : null),
+                  ),
+                  child: (_imageBytes == null && widget.barang?.image == null)
+                      ? const Icon(Icons.inventory_2, size: 50, color: Colors.grey)
+                      : null,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _previewItem('Nama', namaController.text),
+              _previewItem('Kategori', categoryName),
+              _previewItem('Harga Jual', 'Rp ${hargaController.text}'),
+              _previewItem('Stok', stokController.text),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _saveProduct();
+            },
+            child: const Text('Konfirmasi & Simpan'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _previewItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Text(value, style: const TextStyle(fontSize: 13)),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveProduct() async {
     setState(() => _isLoading = true);
 
     try {
@@ -113,29 +183,83 @@ class _FormBarangPageState extends State<FormBarangPage> {
         stok: int.tryParse(stokController.text) ?? 0,
         minStok: int.tryParse(minStokController.text) ?? 5,
         barcode: barcodeController.text,
-        image: widget.barang?.image, // Keep old image path if not updated
+        image: widget.barang?.image, 
       );
 
+      bool success;
       if (isEdit) {
-        await _productService.updateProduct(productData, imagePath: _imageFile?.path);
+        success = await _productService.updateProduct(
+          productData, 
+          imageBytes: _imageBytes, 
+          imageFilename: _imageFilename
+        );
       } else {
-        await _productService.addProduct(productData, imagePath: _imageFile?.path);
+        final result = await _productService.addProduct(
+          productData, 
+          imageBytes: _imageBytes, 
+          imageFilename: _imageFilename
+        );
+        success = result != null;
       }
 
       if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(isEdit ? 'Barang berhasil diperbarui' : 'Barang berhasil disimpan')),
-        );
+        if (success) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(isEdit ? 'Barang berhasil diperbarui' : 'Barang berhasil disimpan')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Gagal menyimpan barang'), backgroundColor: Colors.red),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal ${widget.barang != null ? 'memperbarui' : 'menyimpan'} barang: $e')),
+          SnackBar(content: Text('Error: $e')),
         );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _deleteProduct() async {
+    final confirmed = await showDialog<bool>(
+      context: context, 
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus Barang?'),
+        content: const Text('Produk akan dinonaktifkan dari daftar jual untuk menjaga integritas laporan.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true), 
+            child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      )
+    );
+
+    if (confirmed == true) {
+      setState(() => _isLoading = true);
+      try {
+        await _productService.deleteProduct(widget.barang!.id);
+        if (mounted) {
+          Navigator.pop(context, true); // Pop form and indicate deletion
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Barang berhasil dihapus')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gagal menghapus barang: $e')),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -184,9 +308,9 @@ class _FormBarangPageState extends State<FormBarangPage> {
                                 color: Colors.grey[200],
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(color: Colors.grey[400]!),
-                                image: _imageFile != null 
+                                image: _imageBytes != null 
                                   ? DecorationImage(
-                                      image: FileImage(_imageFile!),
+                                      image: MemoryImage(_imageBytes!),
                                       fit: BoxFit.cover,
                                     ) 
                                   : (isEdit && widget.barang?.image != null) 
@@ -196,7 +320,7 @@ class _FormBarangPageState extends State<FormBarangPage> {
                                         )
                                       : null,
                               ),
-                              child: (_imageFile == null && (!isEdit || widget.barang?.image == null))
+                              child: (_imageBytes == null && (!isEdit || widget.barang?.image == null))
                                 ? Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -288,7 +412,7 @@ class _FormBarangPageState extends State<FormBarangPage> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 16),
                     // Tombol Simpan
                     SizedBox(
                       width: double.infinity,
@@ -299,13 +423,32 @@ class _FormBarangPageState extends State<FormBarangPage> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           elevation: 0,
                         ),
-                        onPressed: _saveProduct,
-                        child: const Text(
-                          'SIMPAN DATA BARANG',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                        onPressed: _showPreviewDialog,
+                        child: Text(
+                          isEdit ? 'PERBARUI DATA' : 'SIMPAN DATA BARANG',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                         ),
                       ),
                     ),
+                    
+                    if (isEdit) ...[
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.red),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          onPressed: _deleteProduct,
+                          child: const Text(
+                            'HAPUS BARANG',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.red),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
