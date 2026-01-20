@@ -26,6 +26,8 @@ class _LaporanPembelianPageState extends State<LaporanPembelianPage> {
 
   @override
   Widget build(BuildContext context) {
+    final pembelian = DummyData.pembelian;
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: Column(
