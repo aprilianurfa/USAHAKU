@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../core/dummy_data.dart';
+import '../../services/product_service.dart';
+import '../../services/transaction_service.dart';
+import '../../models/product_model.dart';
+import '../../models/transaction_model.dart';
+import '../../models/category_model.dart';
 
 enum SortMode { terbanyak, tersedikit }
 
@@ -7,36 +11,85 @@ class SalesReportPage extends StatefulWidget {
   const SalesReportPage({super.key});
 
   @override
-  State<SalesReportPage> createState() =>
-      _SalesReportPageState();
+  State<SalesReportPage> createState() => _SalesReportPageState();
 }
 
-class _SalesReportPageState
-    extends State<SalesReportPage> {
+class _SalesReportPageState extends State<SalesReportPage> {
+  final ProductService _productService = ProductService();
+  final TransactionService _transactionService = TransactionService();
+
   String keyword = '';
   SortMode sortMode = SortMode.terbanyak;
+  
+  List<Barang> _products = [];
+  List<Transaksi> _transactions = [];
+  Map<String, String> _categoryMap = {}; // ID -> Name
+  bool _isLoading = true;
 
-  /// ================= HITUNG TOTAL TERJUAL PER BARANG =================
-  int totalTerjual(String namaBarang) {
-    int total = 0;
-    for (var trx in DummyData.transaksi) {
-      for (var item in trx['items']) {
-        if (item['nama'] == namaBarang) {
-          total += item['qty'] as int;
-        }
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    try {
+      final products = await _productService.getProducts();
+      final categories = await _productService.getCategories();
+      final report = await _transactionService.getSalesReport(); 
+      
+      if (mounted) {
+        setState(() {
+          _products = products;
+          _transactions = report.transactions;
+          _categoryMap = {for (var c in categories) c.id: c.nama};
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memuat data: $e')),
+        );
       }
     }
-    return total;
+  }
+
+  // Optimized approach: Calculate map of sold counts once
+  Map<String, int> _calculateSolds() {
+    Map<String, int> soldMap = {};
+    for (var trx in _transactions) {
+      for (var item in trx.items) {
+        // Use barangId as it is defined in TransaksiItem model
+        String key = item.barangId.isNotEmpty ? item.barangId : item.namaBarang;
+        soldMap[key] = (soldMap[key] ?? 0) + item.qty;
+      }
+    }
+    return soldMap;
   }
 
   @override
   Widget build(BuildContext context) {
-    // ================= DATA BARANG + TERJUAL =================
-    final List<Map<String, dynamic>> data = DummyData.barang.map((b) {
-      final terjual = totalTerjual(b['nama']);
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // ================= PREPARE DATA =================
+    final soldMap = _calculateSolds();
+
+    final List<Map<String, dynamic>> data = _products.map((p) {
+      int sold = soldMap[p.id] ?? 0;
+      if (sold == 0) sold = soldMap[p.nama] ?? 0;
+
       return {
-        ...b,
-        'terjual': terjual,
+        'id': p.id,
+        'nama': p.nama,
+        'kategori': _categoryMap[p.kategoriId] ?? 'Umum', 
+        'terjual': sold,
+        'stok': p.stok,
       };
     }).toList();
 

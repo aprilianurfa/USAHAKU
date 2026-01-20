@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../core/api_client.dart';
 import '../models/transaction_model.dart';
+import '../models/sales_report_model.dart';
 
 class TransactionService {
   final Dio _dio = ApiClient().dio;
@@ -33,6 +34,36 @@ class TransactionService {
       return [];
     } catch (e) {
       throw Exception('Gagal memuat riwayat transaksi: $e');
+    }
+  }
+
+  Future<SalesReport> getSalesReport({DateTime? startDate, DateTime? endDate}) async {
+    try {
+      Map<String, dynamic> queryParams = {};
+      if (startDate != null && endDate != null) {
+        queryParams['startDate'] = startDate.toIso8601String();
+        queryParams['endDate'] = endDate.toIso8601String();
+      }
+
+      final response = await _dio.get('/reports/sales', queryParameters: queryParams);
+      if (response.statusCode == 200) {
+        return SalesReport.fromMap(response.data);
+      }
+      throw Exception('Gagal memuat laporan penjualan');
+    } catch (e) {
+      throw Exception('Gagal memuat laporan penjualan: $e');
+    }
+  }
+
+  Future<DashboardSummary> getDashboardSummary() async {
+    try {
+      final response = await _dio.get('/reports/summary');
+      if (response.statusCode == 200) {
+        return DashboardSummary.fromMap(response.data);
+      }
+      throw Exception('Gagal memuat ringkasan dashboard');
+    } catch (e) {
+      throw Exception('Gagal memuat ringkasan dashboard: $e');
     }
   }
 

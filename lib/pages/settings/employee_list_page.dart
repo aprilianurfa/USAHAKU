@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
+import '../../core/theme.dart';
 import 'add_employee_page.dart';
 
 class EmployeeListPage extends StatefulWidget {
@@ -67,21 +68,14 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Royal Blue Theme Colors
-    const Color primaryBlue = Color(0xFF1A46BE);
-    const Color bgWhite = Color(0xFFF5F7FA);
-
     return Scaffold(
-      backgroundColor: bgWhite,
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
         title: const Text("Daftar Karyawan"),
-        backgroundColor: primaryBlue,
+        backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
-        ),
       ),
       body: FutureBuilder<dynamic>(
         future: _employeesFuture,
@@ -122,7 +116,7 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
           return RefreshIndicator(
             onRefresh: () async => _loadEmployees(),
             child: ListView.separated(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 80), // Add bottom padding for FAB
               itemCount: employees.length,
               separatorBuilder: (ctx, i) => const SizedBox(height: 12),
               itemBuilder: (ctx, i) {
@@ -131,36 +125,37 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
                 final String role = emp['role'] ?? 'Staff';
                 final int id = emp['id'];
 
-                return Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
-                    ],
-                  ),
+                return Card(
+                  elevation: 0,
+                  margin: EdgeInsets.zero, // Controlled by ListView separator
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     leading: CircleAvatar(
                       radius: 24,
-                      backgroundColor: primaryBlue.withOpacity(0.1),
+                      backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
                       child: Text(
                         name.isNotEmpty ? name[0].toUpperCase() : '?',
-                        style: const TextStyle(color: primaryBlue, fontWeight: FontWeight.bold, fontSize: 18),
+                        style: const TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold, fontSize: 18),
                       ),
                     ),
                     title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    subtitle: Container(
-                      margin: const EdgeInsets.only(top: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        role.toUpperCase(),
-                        style: const TextStyle(fontSize: 10, color: Colors.orange, fontWeight: FontWeight.bold),
-                      ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            role.toUpperCase(),
+                            style: const TextStyle(fontSize: 10, color: Colors.orange, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
                     ),
                     trailing: IconButton(
                       icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
@@ -173,18 +168,38 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final refresh = await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => AddEmployeePage()),
-          );
-          if (refresh == true) {
-            _loadEmployees();
-          }
-        },
-        backgroundColor: primaryBlue,
-        child: const Icon(Icons.person_add_rounded),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: SizedBox(
+          width: double.infinity,
+          height: 55,
+          child: FloatingActionButton.extended(
+            backgroundColor: AppTheme.primaryColor,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            icon: const Icon(Icons.person_add_rounded, color: Colors.white),
+            label: const Text(
+              "TAMBAH KARYAWAN BARU",
+              style: TextStyle(
+                color: Colors.white, 
+                fontWeight: FontWeight.bold, 
+                letterSpacing: 1.2
+              ),
+            ),
+            onPressed: () async {
+              final refresh = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const AddEmployeePage()),
+              );
+              if (refresh == true) {
+                _loadEmployees();
+              }
+            },
+          ),
+        ),
       ),
     );
   }

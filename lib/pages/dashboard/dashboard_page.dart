@@ -5,6 +5,7 @@ import '../../services/product_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/shift_service.dart';
 import '../../models/product_model.dart';
+import '../../services/transaction_service.dart';
 import '../shift/open_shift_page.dart';
 import '../shift/close_shift_page.dart';
 
@@ -20,6 +21,7 @@ class _DashboardPageState extends State<DashboardPage> {
   final ProductService _productService = ProductService();
   final AuthService _authService = AuthService();
   final ShiftService _shiftService = ShiftService();
+  final TransactionService _transactionService = TransactionService();
 
   // State Variables
   double _totalPenjualan = 0;
@@ -38,12 +40,20 @@ class _DashboardPageState extends State<DashboardPage> {
   Future<void> _initializeApp() async {
     await _loadUserRole();
     await _checkShiftStatus();
-    // Simulate sales data fetch (Replace with actual SalesService later if needed)
-    if (mounted) {
-      setState(() {
-        _totalPenjualan = 2500000;
-        _totalTransaksi = 47;
-      });
+    await _fetchSalesSummary();
+  }
+
+  Future<void> _fetchSalesSummary() async {
+    try {
+      final summary = await _transactionService.getDashboardSummary();
+      if (mounted) {
+        setState(() {
+          _totalPenjualan = summary.salesToday.toDouble();
+          _totalTransaksi = summary.trxCountToday;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching sales summary: $e");
     }
   }
 
