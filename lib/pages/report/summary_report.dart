@@ -3,14 +3,14 @@ import '../../core/theme.dart';
 import '../../services/report_service.dart';
 import 'package:intl/intl.dart';
 
-class LaporanRingkasanPage extends StatefulWidget {
-  const LaporanRingkasanPage({super.key});
+class SummaryReportPage extends StatefulWidget {
+  const SummaryReportPage({super.key});
 
   @override
-  State<LaporanRingkasanPage> createState() => _LaporanRingkasanPageState();
+  State<SummaryReportPage> createState() => _SummaryReportPageState();
 }
 
-class _LaporanRingkasanPageState extends State<LaporanRingkasanPage> {
+class _SummaryReportPageState extends State<SummaryReportPage> {
   final ReportService _reportService = ReportService();
   Map<String, dynamic> _summaryData = {};
   bool _isLoading = true;
@@ -102,42 +102,42 @@ class _LaporanRingkasanPageState extends State<LaporanRingkasanPage> {
                            "Laporan Penjualan", 
                            Icons.bar_chart_rounded, 
                            Colors.blue, 
-                           '/sales-report'
+                           '/report-sales'
                          ),
                          _buildReportCard(
                            context, 
                            "Riwayat Transaksi", 
                            Icons.history_edu_rounded, 
                            Colors.purple, 
-                           '/transaction-report'
+                           '/transaction-history'
                          ),
                          _buildReportCard(
                            context, 
                            "Laporan Laba Rugi", 
                            Icons.pie_chart_rounded, 
                            Colors.green, 
-                           '/profit-loss-report'
+                           '/report-profit-loss'
                          ),
                          _buildReportCard(
                            context, 
                            "Arus Kas", 
                            Icons.account_balance_wallet_rounded, 
                            Colors.orange, 
-                           '/cash-flow-report'
+                           '/report-cash-flow'
                          ),
                          _buildReportCard(
                            context, 
                            "Produk Terlaris", 
                            Icons.star_rounded, 
                            Colors.amber.shade700, 
-                           '/product-sales-report'
+                           '/report-product-sales'
                          ),
                          _buildReportCard(
                            context, 
                            "Analisa Pengunjung", 
                            Icons.people_alt_rounded, 
                            Colors.teal, 
-                           '/visitor-report'
+                           '/report-visitor'
                          ),
                       ],
                     )

@@ -4,14 +4,14 @@ import '../../core/theme.dart';
 import '../../models/transaction_model.dart';
 import '../../services/transaction_service.dart';
 
-class RiwayatTransaksiPage extends StatefulWidget {
-  const RiwayatTransaksiPage({super.key});
+class TransactionHistoryPage extends StatefulWidget {
+  const TransactionHistoryPage({super.key});
 
   @override
-  State<RiwayatTransaksiPage> createState() => _RiwayatTransaksiPageState();
+  State<TransactionHistoryPage> createState() => _TransactionHistoryPageState();
 }
 
-class _RiwayatTransaksiPageState extends State<RiwayatTransaksiPage> {
+class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   final TransactionService _transactionService = TransactionService();
   final NumberFormat currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
   final DateFormat dateFormatter = DateFormat('dd MMM yyyy, HH:mm');

@@ -4,14 +4,14 @@ import '../../core/theme.dart';
 import '../../models/purchase_model.dart';
 import '../../services/purchase_service.dart';
 
-class LaporanPembelianPage extends StatefulWidget {
-  const LaporanPembelianPage({super.key});
+class PurchaseReportPage extends StatefulWidget {
+  const PurchaseReportPage({super.key});
 
   @override
-  State<LaporanPembelianPage> createState() => _LaporanPembelianPageState();
+  State<PurchaseReportPage> createState() => _PurchaseReportPageState();
 }
 
-class _LaporanPembelianPageState extends State<LaporanPembelianPage> {
+class _PurchaseReportPageState extends State<PurchaseReportPage> {
   final PurchaseService _purchaseService = PurchaseService();
   final currencyFormatter = NumberFormat.currency(locale: 'id', symbol: 'Rp ', decimalDigits: 0);
   final dateFormatter = DateFormat('dd MMM yyyy, HH:mm');
@@ -26,7 +26,7 @@ class _LaporanPembelianPageState extends State<LaporanPembelianPage> {
 
   @override
   Widget build(BuildContext context) {
-    final pembelian = DummyData.pembelian;
+
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class LaporanPengunjungPage extends StatelessWidget {
-  const LaporanPengunjungPage({super.key});
+class VisitorReportPage extends StatelessWidget {
+  const VisitorReportPage({super.key});
 
   // ❗ Locale dihapus agar tidak error
   String formatTanggal(DateTime date) {

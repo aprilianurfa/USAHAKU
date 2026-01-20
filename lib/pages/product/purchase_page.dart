@@ -7,14 +7,14 @@ import '../../models/purchase_item_model.dart';
 import '../../services/product_service.dart';
 import '../../services/purchase_service.dart';
 
-class PembelianPage extends StatefulWidget {
-  const PembelianPage({super.key});
+class PurchasePage extends StatefulWidget {
+  const PurchasePage({super.key});
 
   @override
-  State<PembelianPage> createState() => _PembelianPageState();
+  State<PurchasePage> createState() => _PurchasePageState();
 }
 
-class _PembelianPageState extends State<PembelianPage> {
+class _PurchasePageState extends State<PurchasePage> {
   final ProductService _productService = ProductService();
   final PurchaseService _purchaseService = PurchaseService();
   final currencyFormatter = NumberFormat.currency(locale: 'id', symbol: 'Rp ', decimalDigits: 0);

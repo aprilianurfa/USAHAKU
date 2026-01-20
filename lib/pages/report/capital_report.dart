@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class LaporanModalPage extends StatelessWidget {
-  const LaporanModalPage({super.key});
+class CapitalReportPage extends StatelessWidget {
+  const CapitalReportPage({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -7,25 +7,31 @@ import '../pages/auth/register_page.dart';
 // DASHBOARD
 import '../pages/dashboard/dashboard_page.dart';
 
-// BARANG & PEMBELIAN
-import '../pages/barang/barang_page.dart';
-import '../pages/barang/kategori_page.dart';
-import '../pages/barang/pembelian_page.dart';
+// PRODUCT & PURCHASE
+import '../pages/product/product_page.dart';
+import '../pages/product/category_page.dart';
+import '../pages/product/purchase_page.dart';
 
-// TRANSAKSI
-import '../pages/transaksi/transaksi_page.dart';
-import '../pages/transaksi/riwayat_transaksi_page.dart';
-import '../pages/transaksi/printer_page.dart';
-// LAPORAN
-import '../pages/laporan/laporan_ringkasan.dart';
-import '../pages/laporan/laporan_penjualan.dart';
-import '../pages/laporan/laporan_laba_rugi.dart';
-import '../pages/laporan/laporan_arus_kas.dart';
-import '../pages/laporan/laporan_penjualan_barang.dart';
-import '../pages/laporan/laporan_pembelian.dart';
-import '../pages/laporan/laporan_modal.dart';
-import '../pages/laporan/laporan_biaya.dart';
-import '../pages/laporan/laporan_pengunjung.dart';
+// TRANSACTION
+import '../pages/transaction/transaction_page.dart';
+import '../pages/transaction/transaction_history_page.dart';
+import '../pages/transaction/printer_page.dart';
+
+// REPORT
+import '../pages/report/summary_report.dart';
+import '../pages/report/sales_report.dart';
+import '../pages/report/profit_loss_report.dart';
+import '../pages/report/cash_flow_report.dart';
+import '../pages/report/product_sales_report.dart';
+import '../pages/report/purchase_report.dart';
+import '../pages/report/capital_report.dart';
+import '../pages/report/expense_report.dart';
+import '../pages/report/visitor_report.dart';
+import '../pages/report/transaction_report.dart';
+
+// PROFILE & SETTINGS
+import '../pages/profile/profile_page.dart';
+import '../pages/settings/employee_list_page.dart';
 
 class AppRoutes {
   static Map<String, WidgetBuilder> routes = {
@@ -33,29 +39,33 @@ class AppRoutes {
     '/login': (context) => const LoginPage(),
     '/register': (context) => const RegisterPage(),
 
-    // DASHBOARD - HAPUS 'const' DI SINI
+    // DASHBOARD
     '/dashboard': (context) => DashboardPage(),
 
-    // BARANG & STOK
-    '/barang': (context) => const BarangPage(),
-    '/kategori': (context) => const KategoriPage(),
-    '/pembelian': (context) => const PembelianPage(),
+    // PRODUCT
+    '/product': (context) => const ProductPage(),
+    '/category': (context) => const CategoryPage(),
+    '/purchase': (context) => const PurchasePage(),
 
-    // TRANSAKSI
-    '/transaksi': (context) => const TransaksiPage(),
-    '/riwayat-transaksi': (context) => const RiwayatTransaksiPage(),
-    // Di dalam AppRoutes.routes
+    // TRANSACTION
+    '/transaction': (context) => const TransactionPage(),
+    '/transaction-history': (context) => const TransactionHistoryPage(),
     '/printer-setting': (context) => PrinterPage(),
 
-    // LAPORAN
-    '/laporan': (context) => const LaporanRingkasanPage(),
-    '/laporan-penjualan': (context) => const LaporanPenjualanPage(),
-    '/laporan-laba-rugi': (context) => const LaporanLabaRugiPage(),
-    '/laporan-arus-kas': (context) => const LaporanArusKasPage(),
-    '/laporan-penjualan-barang': (context) => const LaporanPenjualanBarangPage(),
-    '/laporan-pembelian': (context) => const LaporanPembelianPage(),
-    '/laporan-modal': (context) => const LaporanModalPage(),
-    '/laporan-biaya': (context) => const LaporanBiayaPage(),
-    '/laporan-pengunjung': (context) => const LaporanPengunjungPage(),
+    // REPORT
+    '/report': (context) => const SummaryReportPage(),
+    '/report-sales': (context) => const SalesReportPage(),
+    '/report-profit-loss': (context) => const ProfitLossReportPage(),
+    '/report-cash-flow': (context) => const CashFlowReportPage(),
+    '/report-product-sales': (context) => const ProductSalesReportPage(),
+    '/report-purchase': (context) => const PurchaseReportPage(),
+    '/report-capital': (context) => const CapitalReportPage(),
+    '/report-expense': (context) => const ExpenseReportPage(),
+    '/report-visitor': (context) => const VisitorReportPage(),
+    '/report-transaction': (context) => const TransactionReportPage(),
+
+    // PROFILE & SETTINGS
+    '/profile': (context) => const ProfilePage(),
+    '/employee-list': (context) => const EmployeeListPage(),
   };
 }

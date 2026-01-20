@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class LaporanArusKasPage extends StatelessWidget {
-  const LaporanArusKasPage({super.key});
+class CashFlowReportPage extends StatelessWidget {
+  const CashFlowReportPage({super.key});
 
   String formatRupiah(num value) {
     return NumberFormat.currency(

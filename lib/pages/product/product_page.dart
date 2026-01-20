@@ -8,14 +8,14 @@ import '../../config/constants.dart';
 import 'product_form_page.dart';
 import 'package:intl/intl.dart';
 
-class BarangPage extends StatefulWidget {
-  const BarangPage({super.key});
+class ProductPage extends StatefulWidget {
+  const ProductPage({super.key});
 
   @override
-  State<BarangPage> createState() => _BarangPageState();
+  State<ProductPage> createState() => _ProductPageState();
 }
 
-class _BarangPageState extends State<BarangPage> {
+class _ProductPageState extends State<ProductPage> {
   final ProductService _productService = ProductService();
   final currencyFormatter = NumberFormat.currency(locale: 'id', symbol: 'Rp ', decimalDigits: 0);
   
@@ -222,7 +222,7 @@ class _BarangPageState extends State<BarangPage> {
         ),
         onPressed: () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const FormBarangPage()),
+          MaterialPageRoute(builder: (_) => const ProductFormPage()),
         ).then((_) => _loadData()),
       ),
     ),
@@ -240,7 +240,7 @@ class _BarangPageState extends State<BarangPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => FormBarangPage(barang: item),
+              builder: (_) => ProductFormPage(barang: item),
             ),
           ).then((result) { if (result == true) _loadData(); });
         },

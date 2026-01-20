@@ -3,16 +3,16 @@ import '../../core/dummy_data.dart';
 
 enum SortMode { terbanyak, tersedikit }
 
-class LaporanPenjualanBarangPage extends StatefulWidget {
-  const LaporanPenjualanBarangPage({super.key});
+class SalesReportPage extends StatefulWidget {
+  const SalesReportPage({super.key});
 
   @override
-  State<LaporanPenjualanBarangPage> createState() =>
-      _LaporanPenjualanBarangPageState();
+  State<SalesReportPage> createState() =>
+      _SalesReportPageState();
 }
 
-class _LaporanPenjualanBarangPageState
-    extends State<LaporanPenjualanBarangPage> {
+class _SalesReportPageState
+    extends State<SalesReportPage> {
   String keyword = '';
   SortMode sortMode = SortMode.terbanyak;
 

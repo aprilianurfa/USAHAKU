@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../models/transaksi.dart';
+import '../../models/transaction_model.dart';
 import '../../services/transaction_service.dart';
 
-class LaporanTransaksiPage extends StatefulWidget {
-  const LaporanTransaksiPage({super.key});
+class TransactionReportPage extends StatefulWidget {
+  const TransactionReportPage({super.key});
 
   @override
-  State<LaporanTransaksiPage> createState() => _LaporanTransaksiPageState();
+  State<TransactionReportPage> createState() => _TransactionReportPageState();
 }
 
-class _LaporanTransaksiPageState extends State<LaporanTransaksiPage> {
+class _TransactionReportPageState extends State<TransactionReportPage> {
   final TransactionService _transactionService = TransactionService();
   final NumberFormat _rupiah =
       NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);

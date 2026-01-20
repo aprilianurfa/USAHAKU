@@ -9,14 +9,14 @@ import '../../services/product_service.dart';
 import '../../services/transaction_service.dart';
 import '../../config/constants.dart';
 
-class TransaksiPage extends StatefulWidget {
-  const TransaksiPage({super.key});
+class TransactionPage extends StatefulWidget {
+  const TransactionPage({super.key});
 
   @override
-  State<TransaksiPage> createState() => _TransaksiPageState();
+  State<TransactionPage> createState() => _TransactionPageState();
 }
 
-class _TransaksiPageState extends State<TransaksiPage> {
+class _TransactionPageState extends State<TransactionPage> {
   // Services
   final ProductService _productService = ProductService();
   final TransactionService _transactionService = TransactionService();

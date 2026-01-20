@@ -7,15 +7,15 @@ import '../../models/category_model.dart';
 import '../../services/product_service.dart';
 import '../../config/constants.dart';
 
-class FormBarangPage extends StatefulWidget {
+class ProductFormPage extends StatefulWidget {
   final Barang? barang;
-  const FormBarangPage({super.key, this.barang});
+  const ProductFormPage({super.key, this.barang});
 
   @override
-  State<FormBarangPage> createState() => _FormBarangPageState();
+  State<ProductFormPage> createState() => _ProductFormPageState();
 }
 
-class _FormBarangPageState extends State<FormBarangPage> {
+class _ProductFormPageState extends State<ProductFormPage> {
   final _formKey = GlobalKey<FormState>();
   final ProductService _productService = ProductService();
   final ImagePicker _picker = ImagePicker();

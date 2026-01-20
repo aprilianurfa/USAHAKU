@@ -3,14 +3,14 @@ import '../../core/theme.dart';
 import '../../models/category_model.dart';
 import '../../services/product_service.dart';
 
-class KategoriPage extends StatefulWidget {
-  const KategoriPage({super.key});
+class CategoryPage extends StatefulWidget {
+  const CategoryPage({super.key});
 
   @override
-  State<KategoriPage> createState() => _KategoriPageState();
+  State<CategoryPage> createState() => _CategoryPageState();
 }
 
-class _KategoriPageState extends State<KategoriPage> {
+class _CategoryPageState extends State<CategoryPage> {
   final _formKey = GlobalKey<FormState>();
   final kategoriController = TextEditingController();
   final ProductService _productService = ProductService();

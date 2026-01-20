@@ -7,14 +7,14 @@ import '../../widgets/summary_card.dart';
 
 enum FilterMode { harian, bulanan }
 
-class LaporanLabaRugiPage extends StatefulWidget {
-  const LaporanLabaRugiPage({super.key});
+class ProfitLossReportPage extends StatefulWidget {
+  const ProfitLossReportPage({super.key});
 
   @override
-  State<LaporanLabaRugiPage> createState() => _LaporanLabaRugiPageState();
+  State<ProfitLossReportPage> createState() => _ProfitLossReportPageState();
 }
 
-class _LaporanLabaRugiPageState extends State<LaporanLabaRugiPage> {
+class _ProfitLossReportPageState extends State<ProfitLossReportPage> {
   FilterMode mode = FilterMode.harian;
   DateTime selectedDate = DateTime.now();
 
