@@ -1,5 +1,5 @@
-import '../models/transaksi.dart';
-import '../models/transaksi_item.dart';
+import '../models/transaction_model.dart';
+import '../models/transaction_item_model.dart';
 
 class DummyTransaksi {
   static List<Transaksi> data = [

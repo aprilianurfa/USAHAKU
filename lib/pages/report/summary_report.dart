@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../services/report_service.dart';
 import 'package:intl/intl.dart';
+import '../../widgets/app_drawer.dart';
 
 class SummaryReportPage extends StatefulWidget {
   const SummaryReportPage({super.key});
@@ -39,9 +40,30 @@ class _SummaryReportPageState extends State<SummaryReportPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
+      drawer: const AppDrawer(),
+      appBar: AppBar(
+        title: const Text("Pusat Laporan", style: TextStyle(fontWeight: FontWeight.bold)),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: AppTheme.defaultGradient,
+          ),
+        ),
+        foregroundColor: Colors.white,
+      ),
       body: Column(
         children: [
-          _buildHeader(),
+          // _buildHeader() removed
+          // Visual spacer to maintain curved look if needed, or just let body start
+          Container(
+             width: double.infinity,
+             height: 20, 
+             decoration: const BoxDecoration(
+               gradient: AppTheme.defaultGradient,
+               borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+             ),
+          ),
           Expanded(
             child: _isLoading 
               ? const Center(child: CircularProgressIndicator())
@@ -118,13 +140,7 @@ class _SummaryReportPageState extends State<SummaryReportPage> {
                            Colors.green, 
                            '/report-profit-loss'
                          ),
-                         _buildReportCard(
-                           context, 
-                           "Arus Kas", 
-                           Icons.account_balance_wallet_rounded, 
-                           Colors.orange, 
-                           '/report-cash-flow'
-                         ),
+
                          _buildReportCard(
                            context, 
                            "Produk Terlaris", 
@@ -139,6 +155,27 @@ class _SummaryReportPageState extends State<SummaryReportPage> {
                            Colors.teal, 
                            '/report-visitor'
                          ),
+                         _buildReportCard(
+                           context, 
+                           "Laporan Pembelian", 
+                           Icons.shopping_bag_rounded, 
+                           Colors.indigo, 
+                           '/report-purchase'
+                         ),
+                         _buildReportCard(
+                           context, 
+                           "Laporan Modal", 
+                           Icons.account_balance_rounded, 
+                           Colors.blueGrey, 
+                           '/report-capital'
+                         ),
+                         _buildReportCard(
+                           context, 
+                           "Laporan Shift", 
+                           Icons.access_time_filled_rounded, 
+                           Colors.deepPurple, 
+                           '/report-shift'
+                         ),
                       ],
                     )
                   ],
@@ -149,44 +186,7 @@ class _SummaryReportPageState extends State<SummaryReportPage> {
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 10, 16, 20),
-      decoration: const BoxDecoration(
-        color: AppTheme.primaryColor,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-          const Expanded(
-            child: Text(
-              'Pusat Laporan',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(width: 48),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildStatItem(IconData icon, String label) {
     return Row(

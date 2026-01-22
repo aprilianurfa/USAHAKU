@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'dart:ui'; // For BackdropFilter
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import '../../core/theme.dart';
 import '../../services/auth_service.dart';
 import '../../models/user_model.dart';
+import '../../config/constants.dart';
+
 import '../settings/employee_list_page.dart';
+import '../../widgets/app_drawer.dart';
+import 'security_page.dart';
+import 'help_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -20,6 +27,32 @@ class _ProfilePageState extends State<ProfilePage> {
   // Custom Colors
   // final Color _royalBlue = const Color(0xFF1A46BE); // Removed hardcoded
   final Color _bgGrey = const Color(0xFFF8F9FE);
+  
+  String? _shopLogo;
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    
+    if (image != null) {
+      if (!mounted) return;
+      setState(() => _isLoading = true);
+      
+      final result = await _authService.uploadShopLogo(image.path);
+      
+      if (mounted) {
+        setState(() => _isLoading = false);
+        if (result['logoUrl'] != null) {
+          // Backend returns 'uploads/filename.jpg'. We need to fetch profile again or just update state
+          // Assume fetching profile is safer to get full sync
+          _fetchProfile();
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Foto Profil Berhasil Diupdate")));
+        } else {
+           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['error'] ?? "Gagal upload")));
+        }
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -34,6 +67,9 @@ class _ProfilePageState extends State<ProfilePage> {
       if (mounted) {
         setState(() {
           _user = UserModel.fromJson(data);
+          if (data['Shop'] != null && data['Shop']['logo'] != null) {
+             _shopLogo = data['Shop']['logo'];
+          }
           _isLoading = false;
         });
       }
@@ -69,10 +105,10 @@ class _ProfilePageState extends State<ProfilePage> {
           borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
         ),
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-          top: 20,
-          left: 20,
-          right: 20,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 50, // Increased from 20 to 50
+          top: 25,
+          left: 25,
+          right: 25,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -98,6 +134,43 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             const SizedBox(height: 20),
+            
+            // Image Upload in Edit Sheet
+            Center(
+              child: Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.grey.shade200,
+                    backgroundImage: _shopLogo != null 
+                      ? NetworkImage("${AppConstants.imageBaseUrl}$_shopLogo") 
+                      : null,
+                    child: _shopLogo == null 
+                      ? Text(
+                          _user?.nama != null && _user!.nama.isNotEmpty ? _user!.nama[0].toUpperCase() : "U",
+                          style: TextStyle(fontSize: 40, color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
+                        )
+                      : null,
+                  ),
+                  InkWell(
+                    onTap: () {
+                      Navigator.pop(ctx); // Close sheet to pick image to avoid context issues or just pick
+                      _pickImage();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: AppTheme.primaryColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 30),
             
             // Nama Input
             const Text("Nama Lengkap", style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black54)),
@@ -181,10 +254,22 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bgGrey,
+      drawer: const AppDrawer(),
+      appBar: AppBar(
+        title: const Text("Profil Pengguna", style: TextStyle(fontWeight: FontWeight.bold)),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: AppTheme.defaultGradient,
+          ),
+        ),
+        foregroundColor: Colors.white,
+      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _buildHeader(),
+            _buildProfileInfoSection(),
             const SizedBox(height: 60), 
             if (_isLoading)
               const Padding(
@@ -203,79 +288,61 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildProfileInfoSection() {
     return Stack(
       clipBehavior: Clip.none,
       alignment: Alignment.center,
       children: [
         Container(
-          height: 310,  // Increased from 280 to prevent overflow
+          height: 250,  // Adjusted height since AppBar takes top space
           width: double.infinity,
-          decoration: BoxDecoration(
-            color: AppTheme.primaryColor,
-            borderRadius: const BorderRadius.only(
+          decoration: const BoxDecoration(
+            gradient: AppTheme.defaultGradient,
+            borderRadius: BorderRadius.only(
               bottomLeft: Radius.circular(30),
               bottomRight: Radius.circular(30),
             ),
           ),
-          child: SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
-                // Standardized Back Button
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.arrow_back, color: Colors.white),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                      ),
-                      const Spacer(),
-                    ],
-                  ),
+          child: Column(
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: CircleAvatar(
+                child: CircleAvatar(
                     radius: 50,
                     backgroundColor: Colors.grey.shade200,
+                    backgroundImage: _shopLogo != null 
+                      ? NetworkImage("${AppConstants.imageBaseUrl}$_shopLogo") 
+                      : null,
                     child: _isLoading 
                       ? _skeletonBox(40, 40, radius: 20, isDark: false)
-                      : Text(
-                          _user?.nama != null && _user!.nama.isNotEmpty ? _user!.nama[0].toUpperCase() : "U",
-                          style: TextStyle(fontSize: 40, color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
-                        ),
+                      : (_shopLogo == null 
+                          ? Text(
+                              _user?.nama != null && _user!.nama.isNotEmpty ? _user!.nama[0].toUpperCase() : "U",
+                              style: TextStyle(fontSize: 40, color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
+                            )
+                          : null),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _isLoading
-                  ? _skeletonBox(150, 24, radius: 12, isDark: false)
-                  : Text(
-                      _user?.nama ?? "",
-                      style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                const SizedBox(height: 8),
-                _isLoading
-                  ? _skeletonBox(180, 16, radius: 8, isDark: false)
-                  : Text(
-                      _user?.email ?? "",
-                      style: const TextStyle(fontSize: 14, color: Colors.white70),
-                    ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 12),
+              _isLoading
+                ? _skeletonBox(150, 24, radius: 12, isDark: false)
+                : Text(
+                    _user?.nama ?? "",
+                    style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+              const SizedBox(height: 8),
+              _isLoading
+                ? _skeletonBox(180, 16, radius: 8, isDark: false)
+                : Text(
+                    _user?.email ?? "",
+                    style: const TextStyle(fontSize: 14, color: Colors.white70),
+                  ),
+            ],
           ),
         ),
 
@@ -342,11 +409,13 @@ class _ProfilePageState extends State<ProfilePage> {
             const Divider(height: 1, indent: 20, endIndent: 20),
           ],
 
-          _menuTile("Keamanan", Icons.lock_outline, onTap: () {}),
+          _menuTile("Keamanan", Icons.lock_outline, onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityPage()));
+          }),
            const Divider(height: 1, indent: 20, endIndent: 20),
-          _menuTile("Metode Pembayaran", Icons.payments_outlined, onTap: () {}),
-           const Divider(height: 1, indent: 20, endIndent: 20),
-          _menuTile("Bantuan & Dukungan", Icons.help_outline, onTap: () {}),
+          _menuTile("Bantuan & Dukungan", Icons.help_outline, onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpPage()));
+          }),
         ],
       ),
     );
@@ -369,11 +438,34 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  void _confirmLogout() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Konfirmasi Logout'),
+        content: const Text('Apakah anda yakin ingin keluar dari aplikasi?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _logout();
+            },
+            child: const Text('Ya, Keluar', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildLogoutButton() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: TextButton(
-        onPressed: _logout,
+        onPressed: _confirmLogout,
         style: TextButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16),
           backgroundColor: const Color(0xFFFFECEC),

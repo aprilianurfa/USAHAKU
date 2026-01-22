@@ -30,19 +30,35 @@ class _RegisterPageState extends State<RegisterPage> {
         passwordController.text,
       );
 
-      setState(() => _isLoading = false);
-
+      // Don't set loading to false yet if success, we want to proceed to login
+      
       if (!mounted) return;
 
       if (result != null && (result['message'] != null || result['userId'] != null || result['id'] != null)) {
+        // Registration Successful - Now Auto Login
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Registrasi berhasil, silakan login'),
-            backgroundColor: Colors.green,
-          ),
+          const SnackBar(content: Text('Registrasi berhasil, sedang login...'), backgroundColor: Colors.green),
         );
-        Navigator.pop(context); // Kembali ke halaman Login
+
+        final loginResult = await _authService.login(emailController.text, passwordController.text);
+        
+        setState(() => _isLoading = false); // Stop loading now
+
+        if (!mounted) return;
+
+        if (loginResult != null && loginResult['token'] != null) {
+          // Auto Login Success
+          Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
+        } else {
+          // Auto Login Failed
+           ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(content: Text('Login otomatis gagal: ${loginResult?['error']}'), backgroundColor: Colors.orange),
+           );
+           Navigator.pop(context); // Go back to login page
+        }
+
       } else {
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(result['error'] ?? 'Registrasi gagal. Silakan coba lagi.'),

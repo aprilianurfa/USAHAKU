@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../core/theme.dart';
+import '../../widgets/app_drawer.dart';
 
 class CashFlowReportPage extends StatelessWidget {
   const CashFlowReportPage({super.key});
@@ -20,8 +22,11 @@ class CashFlowReportPage extends StatelessWidget {
     final saldoKas = kasMasuk - kasKeluar;
 
     return Scaffold(
+      drawer: const AppDrawer(),
       appBar: AppBar(
-        title: const Text('Laporan Arus Kas'),
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: AppTheme.defaultGradient)),
+        title: const Text('Laporan Arus Kas', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

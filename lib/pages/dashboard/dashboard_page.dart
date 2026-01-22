@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'dart:ui'; 
+import 'package:provider/provider.dart';
 import '../../core/theme.dart';
+import '../../config/constants.dart';
 import '../../services/product_service.dart';
-import '../../services/auth_service.dart';
-import '../../services/shift_service.dart';
-import '../../models/product_model.dart';
-import '../../services/transaction_service.dart';
+import '../../providers/dashboard_provider.dart';
+import '../../providers/product_provider.dart';
 import '../shift/open_shift_page.dart';
 import '../shift/close_shift_page.dart';
 
@@ -17,100 +18,33 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  // Service Instances
+  // Service Instances - Reduced
   final ProductService _productService = ProductService();
-  final AuthService _authService = AuthService();
-  final ShiftService _shiftService = ShiftService();
-  final TransactionService _transactionService = TransactionService();
-
-  // State Variables
-  double _totalPenjualan = 0;
-  int _totalTransaksi = 0;
-  int _stokMenipis = 0;
-  String _role = 'kasir';
-  Map<String, dynamic>? _currentShift;
-  bool _isLoadingShift = true;
 
   @override
   void initState() {
     super.initState();
-    _initializeApp();
+    // Refresh dashboard in background when entering
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<DashboardProvider>().refreshDashboard();
+    });
   }
 
-  Future<void> _initializeApp() async {
-    await _loadUserRole();
-    await _checkShiftStatus();
-    await _fetchSalesSummary();
-  }
-
-  Future<void> _fetchSalesSummary() async {
-    try {
-      final summary = await _transactionService.getDashboardSummary();
-      if (mounted) {
-        setState(() {
-          _totalPenjualan = summary.salesToday.toDouble();
-          _totalTransaksi = summary.trxCountToday;
-        });
-      }
-    } catch (e) {
-      debugPrint("Error fetching sales summary: $e");
-    }
-  }
-
-  Future<void> _loadUserRole() async {
-    final role = await _authService.getRole();
-    if (mounted) {
-      setState(() {
-        _role = role ?? 'kasir';
-      });
-      if (_role == 'owner') {
-        _fetchLowStockCount();
-      }
-    }
-  }
-
-  Future<void> _checkShiftStatus() async {
-    if (!mounted) return;
-    setState(() => _isLoadingShift = true);
-    
-    final shift = await _shiftService.getCurrentShift();
-    
-    if (mounted) {
-      setState(() {
-        _currentShift = shift;
-        _isLoadingShift = false;
-      });
-    }
-  }
-
-  Future<void> _fetchLowStockCount() async {
-    try {
-      final products = await _productService.getLowStockProducts();
-      if (mounted) {
-        setState(() {
-          _stokMenipis = products.length;
-        });
-      }
-    } catch (e) {
-      debugPrint("Error fetching low stock: $e");
-    }
-  }
 
   String _formatRupiah(double amount) {
     return NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp ',
       decimalDigits: 0,
-    ).format(amount).replaceAll(",0", ""); // Show full amount or customize as needed
+    ).format(amount).replaceAll(",0", "");
   }
   
-  // Alternative short format for header
   String _formatRupiahShort(double amount) {
      return NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp ',
       decimalDigits: 1,
-    ).format(amount / 1000000).replaceAll(",0", "") + "jt";
+    ).format(amount / 1000000).replaceAll(",0", "") + " jt";
   }
 
   Future<void> _showNotificationDialog() async {
@@ -118,45 +52,179 @@ class _DashboardPageState extends State<DashboardPage> {
       final lowStockItems = await _productService.getLowStockProducts();
       if (!mounted) return;
 
-      showDialog(
+      showGeneralDialog(
         context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.orange),
-              SizedBox(width: 10),
-              Text("Stok Menipis"),
-            ],
-          ),
-          content: lowStockItems.isEmpty
-              ? const Text("Stok aman, tidak ada barang yang menipis.")
-              : SizedBox(
-                  width: double.maxFinite,
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: lowStockItems.length,
-                    separatorBuilder: (ctx, i) => const Divider(),
-                    itemBuilder: (ctx, i) {
-                      final item = lowStockItems[i];
-                      return ListTile(
-                        title: Text(item.nama, style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text("Sisa: ${item.stok} (Min: ${item.minStok})"),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-                        onTap: () {
-                           Navigator.pop(ctx);
-                           Navigator.pushNamed(context, '/product');
-                        },
-                      );
-                    },
-                  ),
+        barrierDismissible: true,
+        barrierLabel: "Low Stock",
+        transitionDuration: const Duration(milliseconds: 200),
+        pageBuilder: (ctx, anim1, anim2) => Container(),
+        transitionBuilder: (ctx, anim1, anim2, child) {
+          return ScaleTransition(
+            scale: CurvedAnimation(parent: anim1, curve: Curves.easeOutBack),
+            child: AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              contentPadding: EdgeInsets.zero,
+              content: Container(
+                width: MediaQuery.of(context).size.width * 0.9,
+                constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.white,
                 ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text("Tutup"),
-            )
-          ],
-        ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.orange.shade800, Colors.orange.shade600],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight
+                        ),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), shape: BoxShape.circle),
+                            child: const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 24),
+                          ),
+                          const SizedBox(width: 15),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: const [
+                                Text("Stok Menipis!", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                                Text("Segera lakukan restock barang", style: TextStyle(color: Colors.white70, fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    // List
+                    Flexible(
+                      child: lowStockItems.isEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.all(30),
+                            child: Column(
+                              children: [
+                                Icon(Icons.check_circle_outline, size: 60, color: Colors.green.shade300),
+                                const SizedBox(height: 10),
+                                const Text("Stok Aman", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                const Text("Tidak ada barang yang perlu direstock.", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                              ],
+                            ),
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.all(12),
+                            shrinkWrap: true,
+                            itemCount: lowStockItems.length,
+                            separatorBuilder: (ctx, i) => const SizedBox(height: 10),
+                            itemBuilder: (ctx, i) {
+                              final item = lowStockItems[i];
+                              final double progress = (item.stok / (item.minStok == 0 ? 1 : item.minStok)).clamp(0.0, 1.0);
+                              return Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5, offset: const Offset(0, 2))
+                                  ],
+                                  border: Border.all(color: Colors.grey.shade100)
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                       height: 40, width: 40,
+                                       alignment: Alignment.center,
+                                       decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(8)),
+                                       child: Text("${i+1}", style: TextStyle(color: Colors.orange.shade800, fontWeight: FontWeight.bold)),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(item.nama, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                          const SizedBox(height: 6),
+                                          ClipRRect(
+                                            borderRadius: BorderRadius.circular(4),
+                                            child: LinearProgressIndicator(
+                                              value: progress,
+                                              backgroundColor: Colors.grey.shade200,
+                                              valueColor: AlwaysStoppedAnimation<Color>(
+                                                item.stok == 0 ? Colors.red : Colors.orange
+                                              ),
+                                              minHeight: 6,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text("Sisa: ${item.stok}", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: item.stok == 0 ? Colors.red : Colors.orange.shade800)),
+                                              Text("Min: ${item.minStok}", style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                                            ],
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                    ),
+
+                    // Footer
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        border: Border(top: BorderSide(color: Colors.grey.shade100))
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.grey,
+                                side: BorderSide(color: Colors.grey.shade300),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
+                              ),
+                              child: const Text("Tutup"),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                Navigator.pushNamed(context, '/product');
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.primaryColor,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                elevation: 0
+                              ),
+                              child: const Text("Kelola Stok"),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       );
     } catch (e) {
       debugPrint("Error showing notification: $e");
@@ -168,9 +236,8 @@ class _DashboardPageState extends State<DashboardPage> {
       context, 
       MaterialPageRoute(builder: (_) => const OpenShiftPage())
     );
-    // If result is true (shift opened), refresh status
     if (result == true) {
-      _checkShiftStatus();
+      context.read<DashboardProvider>().refreshDashboard();
     }
   }
 
@@ -179,152 +246,169 @@ class _DashboardPageState extends State<DashboardPage> {
       context, 
       MaterialPageRoute(builder: (_) => const CloseShiftPage())
     );
-    // If result is true (shift closed), refresh status
     if (result == true) {
-      _checkShiftStatus();
+      context.read<DashboardProvider>().refreshDashboard();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    bool isOwner = _role == 'owner';
-    bool isShiftOpen = _currentShift != null;
+    final dashProvider = context.watch<DashboardProvider>();
+    final isOwner = dashProvider.role == 'owner';
+    final isShiftOpen = dashProvider.isShiftOpen;
+    final totalPenjualan = dashProvider.summary?.salesToday.toDouble() ?? 0;
+    final totalTransaksi = dashProvider.summary?.trxCountToday ?? 0;
+    final stokMenipis = dashProvider.lowStockCount;
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor, 
-      body: _isLoadingShift 
+      body: dashProvider.isLoading && dashProvider.summary == null
           ? _buildLoadingSkeleton()
-          : SingleChildScrollView(
-              child: Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.topCenter,
-                children: [
-                  Column(
-                    children: [
-                      _buildHeaderSectionTop(isOwner, isShiftOpen),
-                      Transform.translate(
-                        offset: const Offset(0, -165), 
-                        child: Column(
+          : RefreshIndicator(
+              onRefresh: () => dashProvider.refreshDashboard(),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    // --- HEADER & SUMMARY CARD STACK ---
+                    SizedBox(
+                      height: 260,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Positioned(
+                            top: 0, left: 0, right: 0,
+                            height: 360,
+                            child: _buildHeaderSectionTop(dashProvider),
+                          ),
+                          Positioned(
+                            top: 150, 
+                            left: 20, right: 20,
+                            child: _buildSummaryCard(dashProvider, totalPenjualan, totalTransaksi),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 10), // Spacing after Card
+                    
+                    // --- SHIFT ALERT SECTION ---
+                    if (!isShiftOpen)
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.red.shade200)
+                        ),
+                        child: Row(
                           children: [
-                            const SizedBox(height: 100), // Precise space for floating card
-                            
-                            // --- SHIFT ALERT SECTION ---
-                            if (!isShiftOpen)
-                              Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.red.shade50,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: Colors.red.shade200)
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.lock_clock_outlined, color: Colors.red, size: 30),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: const [
-                                          Text("Kasir Belum Dibuka", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-                                          Text("Anda tidak dapat melakukan transaksi sebelum membuka kasir.", style: TextStyle(fontSize: 12, color: Colors.red)),
-                                        ],
-                                      ),
-                                    ),
-                                    ElevatedButton(
-                                      onPressed: _navigateToOpenShift,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                      ),
-                                      child: const Text("Buka"),
-                                    )
-                                  ],
-                                ),
-                              ),
-
-                            // --- OWNER MENU ---
-                            if (isOwner) ...[
-                              _buildSectionContainer(
-                                title: "Manajemen Stok",
-                                icon: Icons.inventory_2_rounded,
-                                children: [
-                                  _menuItemModern(context, Icons.inventory_rounded, "Barang", Colors.indigo, '/product'),
-                                  _menuItemModern(context, Icons.grid_view_rounded, "Kategori", Colors.blue.shade700, '/category'),
-                                  _menuItemModern(context, Icons.shopping_bag_rounded, "Pembelian", Colors.blue.shade500, '/purchase'),
+                            const Icon(Icons.lock_clock_outlined, color: Colors.red, size: 30),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: const [
+                                  Text("Kasir Belum Dibuka", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+                                  Text("Anda tidak dapat melakukan transaksi sebelum membuka kasir.", style: TextStyle(fontSize: 12, color: Colors.red)),
                                 ],
                               ),
-                              const SizedBox(height: 5),
-                            ],
-
-                            // --- KASIR MENU ---
-                            _buildSectionContainer(
-                              title: "Operasional Kasir",
-                              icon: Icons.point_of_sale_rounded,
-                              children: [
-                                _menuItemModern(
-                                  context, 
-                                  Icons.add_shopping_cart_rounded, 
-                                  "Transaksi", 
-                                  isShiftOpen ? Colors.orange.shade800 : Colors.grey, 
-                                  '/transaction',
-                                  enabled: isShiftOpen,
-                                  onDisabledTap: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text("Buka Kasir terlebih dahulu!"))
-                                    );
-                                  }
-                                ),
-                                _menuItemModern(context, Icons.receipt_long_rounded, "Riwayat", Colors.purple.shade700, '/transaction-history'),
-                                _menuItemModern(context, Icons.print_rounded, "Printer BT", Colors.blue.shade600, '/printer-setting'),
-                              ],
                             ),
-
-                            const SizedBox(height: 5),
-
-                            // --- REPORT MENU (OWNER) ---
-                            if (isOwner)
-                              _buildSectionContainer(
-                                title: "Analitik & Laporan",
-                                icon: Icons.analytics_rounded,
-                                gridCount: 4,
-                                children: [
-                                  _menuItemModern(context, Icons.insert_chart_rounded, "Ringkasan", Colors.blue.shade900, '/report'),
-                                  _menuItemModern(context, Icons.trending_up_rounded, "Penjualan", Colors.green.shade700, '/report-sales'),
-                                  _menuItemModern(context, Icons.account_balance_wallet_rounded, "Laba Rugi", Colors.teal.shade700, '/report-profit-loss'),
-                                  _menuItemModern(context, Icons.assignment_rounded, "Lap. Beli", Colors.brown, '/report-purchase'),
-                                  _menuItemModern(context, Icons.savings_rounded, "Modal", Colors.deepOrange, '/report-capital'),
-                                  _menuItemModern(context, Icons.groups_rounded, "Pengunjung", Colors.cyan.shade800, '/report-visitor'),
-                                ],
+                            ElevatedButton(
+                              onPressed: _navigateToOpenShift,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                               ),
+                              child: const Text("Buka"),
+                            )
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                  Positioned(
-                    top: 150, 
-                    left: 20,
-                    right: 20,
-                    child: _buildSummaryCard(isOwner, isShiftOpen),
-                  ),
-                ],
+
+                    // --- MENU SECTIONS ---
+                    Column(
+                      children: [
+                        // --- OWNER MENU ---
+                        if (isOwner) ...[
+                          _buildSectionContainer(
+                            title: "Manajemen Stok",
+                            icon: Icons.inventory_2_rounded,
+                            children: [
+                              _menuItemModern(context, Icons.inventory_rounded, "Barang", Colors.indigo, '/product'),
+                              _menuItemModern(context, Icons.grid_view_rounded, "Kategori", Colors.blue.shade700, '/category'),
+                              _menuItemModern(context, Icons.shopping_bag_rounded, "Pembelian", Colors.blue.shade500, '/purchase'),
+                            ],
+                          ),
+                          const SizedBox(height: 5),
+                        ],
+
+                        // --- KASIR MENU ---
+                        _buildSectionContainer(
+                          title: "Operasional Kasir",
+                          icon: Icons.point_of_sale_rounded,
+                          children: [
+                            _menuItemModern(
+                              context, 
+                              Icons.add_shopping_cart_rounded, 
+                              "Transaksi", 
+                              isShiftOpen ? Colors.orange.shade800 : Colors.grey, 
+                              '/transaction',
+                              enabled: isShiftOpen,
+                              onDisabledTap: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Buka Kasir terlebih dahulu!"))
+                                );
+                              }
+                            ),
+                            _menuItemModern(context, Icons.receipt_long_rounded, "Riwayat", Colors.purple.shade700, '/transaction-history'),
+                            _menuItemModern(context, Icons.print_rounded, "Printer BT", Colors.blue.shade600, '/printer-setting'),
+                          ],
+                        ),
+
+                        const SizedBox(height: 5),
+
+                        // --- REPORT MENU (OWNER) ---
+                        if (isOwner)
+                          _buildSectionContainer(
+                            title: "Analitik & Laporan",
+                            icon: Icons.analytics_rounded,
+                            gridCount: 3,
+                            children: [
+                              _menuItemModern(context, Icons.receipt_long_rounded, "Laporan Shift", Colors.blue.shade900, '/report-shift'),
+                              _menuItemModern(context, Icons.trending_up_rounded, "Penjualan", Colors.green.shade700, '/report-sales'),
+                              _menuItemModern(context, Icons.account_balance_wallet_rounded, "Laba Rugi", Colors.teal.shade700, '/report-profit-loss'),
+                              _menuItemModern(context, Icons.assignment_rounded, "Lap. Beli", Colors.brown, '/report-purchase'),
+                              _menuItemModern(context, Icons.savings_rounded, "Modal", Colors.deepOrange, '/report-capital'),
+                              _menuItemModern(context, Icons.groups_rounded, "Pengunjung", Colors.cyan.shade800, '/report-visitor'),
+                            ],
+                          ),
+                        const SizedBox(height: 20), // Bottom Margin
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
     );
   }
 
-  Widget _buildHeaderSectionTop(bool isOwner, bool isShiftOpen) {
+  Widget _buildHeaderSectionTop(DashboardProvider dashProvider) {
+    bool isOwner = dashProvider.role == 'owner';
+    bool isShiftOpen = dashProvider.isShiftOpen;
+    int stokMenipis = dashProvider.lowStockCount;
+
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: AppTheme.primaryColor,
+        gradient: AppTheme.defaultGradient,
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(40),
           bottomRight: Radius.circular(40),
         ),
       ),
-      padding: EdgeInsets.fromLTRB(25, 40 + MediaQuery.of(context).padding.top, 25, 200),
+      padding: EdgeInsets.fromLTRB(25, 40 + MediaQuery.of(context).padding.top, 25, 80),
       child: Column(
         children: [
           Row(
@@ -337,10 +421,15 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: InkWell(
                   onTap: () => Navigator.pushNamed(context, '/profile'),
                   borderRadius: BorderRadius.circular(28),
-                  child: const CircleAvatar(
+                  child: CircleAvatar(
                     radius: 28,
                     backgroundColor: Colors.white,
-                    child: Icon(Icons.person_rounded, size: 32, color: AppTheme.primaryColor),
+                    backgroundImage: dashProvider.shopLogo != null 
+                         ? NetworkImage("${AppConstants.imageBaseUrl}${dashProvider.shopLogo}") 
+                         : null,
+                    child: dashProvider.shopLogo == null 
+                        ? const Icon(Icons.person_rounded, size: 32, color: AppTheme.primaryColor)
+                        : null,
                   ),
                 ),
               ),
@@ -349,7 +438,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text("Toko Berkah", style: TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(dashProvider.shopName, style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
                     Text(isOwner ? "Owner (Premium)" : "Staff Kasir", style: const TextStyle(color: Colors.white70, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
                   ],
                 ),
@@ -378,6 +467,37 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
               const SizedBox(width: 12),
+              // SYNC STATUS INDICATOR
+              Consumer<ProductProvider>(
+                builder: (context, prodProv, _) {
+                  return Stack(
+                    children: [
+                      IconButton(
+                        onPressed: () => prodProv.performSync(),
+                        icon: Icon(
+                          prodProv.isLoading ? Icons.sync : Icons.cloud_done_outlined,
+                          color: prodProv.pendingSyncCount > 0 ? Colors.orangeAccent : Colors.white,
+                          size: 26,
+                        ),
+                      ),
+                      if (prodProv.pendingSyncCount > 0)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(color: Colors.orange, shape: BoxShape.circle),
+                            child: Text(
+                              "${prodProv.pendingSyncCount}",
+                              style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(width: 4),
               Stack(
                 alignment: Alignment.topRight,
                 children: [
@@ -385,7 +505,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     onPressed: isOwner ? _showNotificationDialog : null,
                     icon: Icon(Icons.notifications_none_rounded, color: isOwner ? Colors.white : Colors.white24, size: 28),
                   ),
-                  if (isOwner && _stokMenipis > 0)
+                  if (isOwner && stokMenipis > 0)
                     Positioned(
                       right: 8,
                       top: 8,
@@ -410,7 +530,11 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildSummaryCard(bool isOwner, bool isShiftOpen) {
+  Widget _buildSummaryCard(DashboardProvider dashProvider, double totalPenjualan, int totalTransaksi) {
+    final isOwner = dashProvider.role == 'owner';
+    final isShiftOpen = dashProvider.isShiftOpen;
+    final stokMenipis = dashProvider.lowStockCount;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 10),
       decoration: BoxDecoration(
@@ -421,25 +545,26 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Expanded(
-            child: _buildSummaryText(
-              "Penjualan", 
-              _formatRupiahShort(_totalPenjualan), 
-              "$_totalTransaksi Transaksi", 
-              Icons.trending_up, 
-              color: Colors.greenAccent
-            )
-          ),
+            Expanded(
+              child: _buildSummaryText(
+                "Penjualan", 
+                _formatRupiahShort(totalPenjualan), 
+                "$totalTransaksi Transaksi", 
+                Icons.trending_up, 
+                color: Colors.greenAccent,
+                onTap: () => Navigator.pushNamed(context, '/report-sales'),
+              )
+            ),
           if (isOwner) ...[
             Container(width: 1, height: 40, color: Colors.white24),
             Expanded(
               child: _buildSummaryText(
                 "Low Stock", 
-                "$_stokMenipis Item", 
+                "$stokMenipis Item", 
                 "Perlu Restok", 
                 Icons.inventory_2_outlined,
-                isWarning: true,
-                color: Colors.orangeAccent,
+                isWarning: stokMenipis > 0,
+                color: stokMenipis > 0 ? Colors.orangeAccent : Colors.white24,
                 onTap: _showNotificationDialog,
               ),
             ),
@@ -583,7 +708,7 @@ class _DashboardPageState extends State<DashboardPage> {
             height: 300,
             width: double.infinity,
             decoration: const BoxDecoration(
-              color: AppTheme.primaryColor,
+              gradient: AppTheme.defaultGradient,
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(40),
                 bottomRight: Radius.circular(40),

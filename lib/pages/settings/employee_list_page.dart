@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../core/theme.dart';
+import '../../core/theme.dart';
+import '../../widgets/app_drawer.dart';
 import 'add_employee_page.dart';
 
 class EmployeeListPage extends StatefulWidget {
@@ -71,12 +73,17 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
-        title: const Text("Daftar Karyawan"),
-        backgroundColor: AppTheme.primaryColor,
+        title: const Text("Daftar Karyawan", style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: AppTheme.defaultGradient,
+          ),
+        ),
         foregroundColor: Colors.white,
         elevation: 0,
-        centerTitle: true,
       ),
+      drawer: const AppDrawer(),
       body: FutureBuilder<dynamic>(
         future: _employeesFuture,
         builder: (context, snapshot) {
@@ -174,31 +181,45 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
         child: SizedBox(
           width: double.infinity,
           height: 55,
-          child: FloatingActionButton.extended(
-            backgroundColor: AppTheme.primaryColor,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            icon: const Icon(Icons.person_add_rounded, color: Colors.white),
-            label: const Text(
-              "TAMBAH KARYAWAN BARU",
-              style: TextStyle(
-                color: Colors.white, 
-                fontWeight: FontWeight.bold, 
-                letterSpacing: 1.2
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: AppTheme.defaultGradient,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(color: AppTheme.primaryColor.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))
+                ]
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () async {
+                    final refresh = await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AddEmployeePage()),
+                    );
+                    if (refresh == true) {
+                      _loadEmployees();
+                    }
+                  },
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.person_add_rounded, color: Colors.white),
+                      SizedBox(width: 10),
+                      Text(
+                        "TAMBAH KARYAWAN BARU",
+                        style: TextStyle(
+                          color: Colors.white, 
+                          fontWeight: FontWeight.bold, 
+                          letterSpacing: 1.2
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-            onPressed: () async {
-              final refresh = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AddEmployeePage()),
-              );
-              if (refresh == true) {
-                _loadEmployees();
-              }
-            },
-          ),
         ),
       ),
     );

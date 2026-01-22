@@ -27,7 +27,7 @@ class TransactionService {
       }
 
       final response = await _dio.get('/transactions', queryParameters: queryParams);
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 304) {
         List<dynamic> data = response.data;
         return data.map((json) => Transaksi.fromMap(json)).toList();
       }
@@ -55,10 +55,11 @@ class TransactionService {
     }
   }
 
-  Future<DashboardSummary> getDashboardSummary() async {
+  Future<DashboardSummary> getDashboardSummary({DateTime? startTime}) async {
     try {
-      final response = await _dio.get('/reports/summary');
-      if (response.statusCode == 200) {
+      final queryParams = startTime != null ? {'startTime': startTime.toIso8601String()} : null;
+      final response = await _dio.get('/reports/summary', queryParameters: queryParams);
+      if (response.statusCode == 200 || response.statusCode == 304) {
         return DashboardSummary.fromMap(response.data);
       }
       throw Exception('Gagal memuat ringkasan dashboard');
@@ -70,7 +71,7 @@ class TransactionService {
   Future<List<String>> getCustomerNames() async {
     try {
       final response = await _dio.get('/transactions/customers');
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 304) {
         return List<String>.from(response.data);
       }
       return [];

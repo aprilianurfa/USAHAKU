@@ -27,7 +27,7 @@ class Transaksi {
       tanggal: DateTime.parse(map['tanggal']),
       pelangganId: map['pelanggan_id'] ?? map['pelangganId'] ?? 'GUEST',
       namaPelanggan: map['nama_pelanggan'] ?? map['namaPelanggan'] ?? 'Umum',
-      items: (map['items'] as List?)
+      items: ((map['items'] ?? map['TransactionItems']) as List?)
               ?.map((e) => TransaksiItem.fromMap(e))
               .toList() ?? [],
       totalBayar: map['total_bayar'] ?? map['totalBayar'] ?? 0,

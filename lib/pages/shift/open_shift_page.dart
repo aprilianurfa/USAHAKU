@@ -50,72 +50,133 @@ class _OpenShiftPageState extends State<OpenShiftPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue.shade900,
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.point_of_sale, size: 80, color: Colors.white),
-              const SizedBox(height: 20),
-              const Text(
-                "Buka Kasir",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppTheme.defaultGradient,
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(30),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Icon Header
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.storefront_rounded, size: 80, color: Colors.white),
                 ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                "Masukkan modal awal di laci kasir\nsebelum memulai transaksi.",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white70, fontSize: 16),
-              ),
-              const SizedBox(height: 40),
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black26, blurRadius: 15, offset: Offset(0, 5))
-                  ]
+                const SizedBox(height: 30),
+                
+                const Text(
+                  "Buka Kasir",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
                 ),
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: _cashController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: "Modal Awal (Rp)",
-                        prefixIcon: const Icon(Icons.money),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        filled: true,
-                        fillColor: Colors.grey.shade50
-                      ),
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _openShift,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue.shade800,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                const SizedBox(height: 10),
+                Text(
+                  "Selamat Datang! Siapkan modal awal\nuntuk memulai operasional hari ini.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 16),
+                ),
+                const SizedBox(height: 50),
+
+                // Input Card
+                Container(
+                  padding: const EdgeInsets.all(30),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(25),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      )
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      const Text(
+                        "INPUT MODAL AWAL",
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1
                         ),
-                        child: _isLoading 
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text("MULAI SHIFT", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 15),
+                      TextField(
+                        controller: _cashController,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A1F3D),
+                        ),
+                        decoration: InputDecoration(
+                          hintText: "0",
+                          prefixText: "Rp ",
+                          prefixStyle: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey.shade400,
+                          ),
+                          border: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey.shade300, width: 2),
+                          ),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey.shade300, width: 2),
+                          ),
+                          focusedBorder: const UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.blueAccent, width: 2),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      
+                      SizedBox(
+                        width: double.infinity,
+                        height: 60,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _openShift,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2C3E50), // Dark premium color
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                            elevation: 5,
+                          ),
+                          child: _isLoading 
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: const [
+                                  Icon(Icons.check_circle_outline, color: Colors.white),
+                                  SizedBox(width: 10),
+                                  Text("MULAI OPERASIONAL", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                                ],
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 30),
+                Text(
+                  "${DateFormat('EEEE, d MMMM yyyy', 'id_ID').format(DateTime.now())}",
+                  style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 14),
+                ),
+              ],
+            ),
           ),
         ),
       ),

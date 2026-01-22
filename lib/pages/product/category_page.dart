@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/theme.dart';
 import '../../models/category_model.dart';
+import '../../models/category_hive.dart';
 import '../../services/product_service.dart';
+import '../../providers/product_provider.dart';
+import '../../widgets/app_drawer.dart';
 
 class CategoryPage extends StatefulWidget {
   const CategoryPage({super.key});
@@ -13,43 +17,42 @@ class CategoryPage extends StatefulWidget {
 class _CategoryPageState extends State<CategoryPage> {
   final _formKey = GlobalKey<FormState>();
   final kategoriController = TextEditingController();
-  final ProductService _productService = ProductService();
-
-  late Future<List<Kategori>> _futureCategories;
 
   @override
   void initState() {
     super.initState();
-    _refreshCategories();
-  }
-
-  void _refreshCategories() {
-    setState(() {
-      _futureCategories = _productService.getCategories();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProductProvider>().loadCategories();
     });
   }
 
   Future<void> _addCategory() async {
     if (kategoriController.text.isEmpty) return;
 
+    final tempId = "LOC-CAT-${DateTime.now().millisecondsSinceEpoch}";
+    final newCat = CategoryHive(
+      id: tempId,
+      nama: kategoriController.text,
+    );
+
     try {
-      final result = await _productService.addCategory(kategoriController.text);
-      if (result != null) {
-        if (mounted) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Kategori berhasil disimpan')),
-          );
-        }
-        kategoriController.clear();
-        _refreshCategories();
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Gagal menyimpan kategori')),
-          );
-        }
+      // 1. Save Locally
+      await context.read<ProductProvider>().saveLocalCategory(newCat);
+      
+      // 2. Queue for Sync
+      await context.read<ProductProvider>().addToSyncQueue(
+        action: 'CREATE',
+        entity: 'CATEGORY',
+        data: newCat.toMap(),
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kategori disimpan secara lokal (antrean sinkronisasi)')),
+        );
       }
+      kategoriController.clear();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -79,20 +82,20 @@ class _CategoryPageState extends State<CategoryPage> {
     if (confirm != true) return;
 
     try {
-       final success = await _productService.deleteCategory(id);
-        if (success) {
-        _refreshCategories();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Kategori dihapus')),
-          );
-        }
-      } else {
-        if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Gagal menghapus kategori')),
-          );
-        }
+      // 1. Delete Locally
+      await context.read<ProductProvider>().deleteLocalCategory(id);
+      
+      // 2. Queue for Sync
+      await context.read<ProductProvider>().addToSyncQueue(
+        action: 'DELETE',
+        entity: 'CATEGORY',
+        data: {'id': id},
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Kategori dihapus (antrean sinkronisasi)')),
+        );
       }
     } catch (e) {
        if (mounted) {
@@ -109,83 +112,67 @@ class _CategoryPageState extends State<CategoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
+
+      drawer: const AppDrawer(),
+      appBar: AppBar(
+        title: const Text("Kategori Barang", style: TextStyle(fontWeight: FontWeight.bold)),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: AppTheme.defaultGradient,
+          ),
+        ),
+        foregroundColor: Colors.white,
+      ),
       body: Column(
         children: [
           // ======================
           // CUSTOM HEADER
           // ======================
+          // Search Bar Section (Modified from Header)
           Container(
-            padding: const EdgeInsets.only(top: 20, bottom: 20, left: 10, right: 10),
+            padding: const EdgeInsets.only(top: 10, bottom: 20, left: 16, right: 16),
             decoration: const BoxDecoration(
-              color: AppTheme.primaryColor,
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+              gradient: AppTheme.defaultGradient,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
             ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ),
-                    const Expanded(
-                      child: Text(
-                        'Kategori Barang',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 48), // Balance for back button
-                  ],
-                ),
-                const SizedBox(height: 15),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: TextField(
-                    onChanged: (val) {
-                      setState(() {
-                         _searchQuery = val;
-                      });
-                    },
-                    decoration: InputDecoration(
-                      hintText: "Cari kategori...",
-                      prefixIcon: const Icon(Icons.search),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
-                    ),
-                  ),
-                ),
-              ],
+            child: TextField(
+              onChanged: (val) {
+                setState(() {
+                   _searchQuery = val;
+                });
+              },
+              decoration: InputDecoration(
+                hintText: "Cari kategori...",
+                prefixIcon: const Icon(Icons.search),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
+              ),
             ),
           ),
 
           Expanded(
-            child: FutureBuilder<List<Kategori>>(
-              future: _futureCategories,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+            child: Consumer<ProductProvider>(
+              builder: (context, provider, child) {
+                if (provider.isLoading && provider.categories.isEmpty) {
                   return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                } else if (provider.error != null && provider.categories.isEmpty) {
+                  return Center(child: Text('Error: ${provider.error}'));
+                } else if (provider.categories.isEmpty) {
                   return const Center(child: Text('Belum ada kategori'));
                 }
 
-                final list = snapshot.data!.where((cat) {
-                  return cat.nama.toLowerCase().contains(_searchQuery.toLowerCase());
-                }).toList();
+                final list = provider.categories
+                  .map((c) => c.toKategori())
+                  .where((cat) {
+                    return cat.nama.toLowerCase().contains(_searchQuery.toLowerCase());
+                  }).toList();
 
                 if (list.isEmpty) {
                    return const Center(child: Text('Kategori tidak ditemukan'));
@@ -286,21 +273,28 @@ class _CategoryPageState extends State<CategoryPage> {
               if (kategoriController.text.isEmpty) return;
               
               if (isEdit) {
-                Navigator.pop(context); // Close dialog manually for edit
-                // UPDATE
-                 try {
-                  final success = await _productService.updateCategory(category.id, kategoriController.text);
-                  if (success) {
-                    _refreshCategories();
-                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kategori diperbarui')));
-                  } else {
-                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gagal update kategori')));
-                  }
+                Navigator.pop(context);
+                try {
+                  final updatedCat = CategoryHive(
+                    id: category.id,
+                    nama: kategoriController.text,
+                  );
+
+                  // 1. Update Locally
+                  await context.read<ProductProvider>().saveLocalCategory(updatedCat);
+                  
+                  // 2. Queue for Sync
+                  await context.read<ProductProvider>().addToSyncQueue(
+                    action: 'UPDATE',
+                    entity: 'CATEGORY',
+                    data: updatedCat.toMap(),
+                  );
+
+                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kategori diperbarui secara lokal')));
                 } catch (e) {
                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
                 }
               } else {
-                // ADD logic handles its own pop
                 _addCategory(); 
               }
             },

@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   static const Color primaryColor = Color(0xFF0A3D62);
-  static const Color secondaryColor = Color(0xFF1E90FF);
+  static const Color secondaryColor = Color(0xFF1E3A8A); // Updated to match gradient end
   static const Color accentColor = Color(0xFF74B9FF);
-  static const Color backgroundColor = Color(0xFFF5F7FA); 
+  static const Color backgroundColor = Color(0xFFF5F7FA);
+
+  static const LinearGradient defaultGradient = LinearGradient(
+    colors: [primaryColor, secondaryColor],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  ); 
 
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,

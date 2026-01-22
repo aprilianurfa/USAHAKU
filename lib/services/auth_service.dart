@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import '../../core/api_client.dart';
 import '../../config/storage_config.dart';
+import '../../services/local_storage_service.dart';
 
 class AuthService {
   final Dio _dio = ApiClient().dio;
@@ -55,6 +56,8 @@ class AuthService {
           if (user['role'] != null) await _storage.write(key: 'role', value: user['role']);
           if (user['nama'] != null) await _storage.write(key: 'userName', value: user['nama']);
           if (user['shop_id'] != null) await _storage.write(key: 'shopId', value: user['shop_id'].toString());
+          if (user['shop_name'] != null) await _storage.write(key: 'shopName', value: user['shop_name']);
+          if (user['shop_logo'] != null) await _storage.write(key: 'shopLogo', value: user['shop_logo']);
         }
         
         return response.data;
@@ -74,6 +77,8 @@ class AuthService {
   // LOGOUT (Optional helper)
   Future<void> logout() async {
     await _storage.deleteAll();
+    // Clear Hive Offline Storage
+    await LocalStorageService().clearAll();
   }
 
   // GET CURRENT ROLE
@@ -86,18 +91,23 @@ class AuthService {
     return await _storage.read(key: 'userName');
   }
 
-  // GET SHOP ID
   Future<String?> getShopId() async {
     return await _storage.read(key: 'shopId');
+  }
+
+  // GET SHOP NAME
+  Future<String?> getShopName() async {
+    return await _storage.read(key: 'shopName');
+  }
+
+  // GET SHOP LOGO
+  Future<String?> getShopLogo() async {
+    return await _storage.read(key: 'shopLogo');
   }
 
   // --- PROFILE ---
   Future<dynamic> getProfile() async {
     try {
-      // Token akan otomatis di-handle oleh ApiClient interceptors (jika ada)
-      // atau kita harus pasang manual jika ApiClient belum support auto-attach token
-      // Asumsi: ApiClient sudah menghandle atau kita butuh cara lain.
-      // Cek ApiClient nanti.
       final response = await _dio.get("/auth/profile");
       return response.data;
     } on DioException catch (e) {
@@ -114,6 +124,40 @@ class AuthService {
       return response.data;
     } on DioException catch (e) {
       return e.response?.data ?? {"error": "Gagal update profil"};
+    }
+  }
+
+  Future<dynamic> changePassword(String oldPassword, String newPassword) async {
+    try {
+      final response = await _dio.put(
+        "/auth/change-password",
+        data: {"oldPassword": oldPassword, "newPassword": newPassword},
+      );
+      return response.data;
+    } on DioException catch (e) {
+      return e.response?.data ?? {"error": "Gagal mengubah password"};
+    }
+  }
+
+  Future<dynamic> uploadShopLogo(String filePath) async {
+    try {
+      String fileName = filePath.split('/').last;
+      FormData formData = FormData.fromMap({
+        "logo": await MultipartFile.fromFile(filePath, filename: fileName),
+      });
+
+      final response = await _dio.put(
+        "/auth/update-logo",
+        data: formData,
+      );
+
+      if (response.data != null && response.data['logoUrl'] != null) {
+        await _storage.write(key: 'shopLogo', value: response.data['logoUrl']);
+      }
+
+      return response.data;
+    } on DioException catch (e) {
+      return e.response?.data ?? {"error": "Gagal upload logo"};
     }
   }
 
@@ -135,7 +179,6 @@ class AuthService {
           "nama": nama,
           "email": email,
           "password": password,
-          // shop_id diambil dari token user owner yg login
         },
       );
       return response.data;
@@ -151,5 +194,15 @@ class AuthService {
     } on DioException catch (e) {
       return e.response?.data ?? {"error": "Gagal menghapus karyawan"};
     }
+  }
+
+  // CHECK LOGIN STATUS
+  Future<bool> isLoggedIn() async {
+    final token = await _storage.read(key: 'token');
+    return token != null && token.isNotEmpty;
+  }
+
+  Future<String?> getToken() async {
+    return await _storage.read(key: 'token');
   }
 }

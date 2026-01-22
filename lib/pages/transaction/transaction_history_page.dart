@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme.dart';
 import '../../models/transaction_model.dart';
 import '../../services/transaction_service.dart';
+import '../../widgets/app_drawer.dart';
 
 class TransactionHistoryPage extends StatefulWidget {
   const TransactionHistoryPage({super.key});
@@ -26,9 +27,10 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   void initState() {
     super.initState();
     // Default to today
+    final now = DateTime.now();
     _selectedDateRange = DateTimeRange(
-      start: DateTime.now().subtract(const Duration(days: 0)),
-      end: DateTime.now(),
+      start: DateTime(now.year, now.month, now.day),
+      end: now,
     );
     _fetchInitialData();
   }
@@ -104,10 +106,34 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
+      drawer: const AppDrawer(),
+      appBar: AppBar(
+        title: const Text("Riwayat Transaksi"),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: AppTheme.defaultGradient,
+          ),
+        ),
+        foregroundColor: Colors.white,
+      ),
       body: Column(
         children: [
-          _buildHeader(),
-          _buildFilterBar(),
+          // Custom header removed, kept only filters if needed or adjusting layout
+          // _buildHeader() removed
+          Container(
+             width: double.infinity,
+             height: 20, 
+             decoration: const BoxDecoration(
+               gradient: AppTheme.defaultGradient,
+               borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+             ),
+          ),
+          Transform.translate(
+            offset: const Offset(0, -20),
+            child: _buildFilterBar(),
+          ),
           _buildCustomerFilter(),
           Expanded(
             child: _isLoading
@@ -196,7 +222,16 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
           t.namaPelanggan ?? "Umum", 
           style: const TextStyle(fontWeight: FontWeight.bold)
         ),
-        subtitle: Text(dateFormatter.format(t.tanggal ?? DateTime.now())),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(dateFormatter.format((t.tanggal ?? DateTime.now()).toLocal())),
+            Text(
+              "${t.items.length} Barang Dibeli",
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            )
+          ],
+        ),
         trailing: Text(
           currencyFormatter.format(t.totalBayar),
           style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryColor),
@@ -204,6 +239,13 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         children: [
           const Divider(),
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: Text("Detail Barang:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            ),
+          ),
           ...t.items.map((item) => Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Row(
@@ -243,44 +285,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + 10, 16, 20),
-      decoration: const BoxDecoration(
-        color: AppTheme.primaryColor,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
-            ),
-          ),
-          const Expanded(
-            child: Text(
-              'Riwayat Transaksi',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(width: 48),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildCustomerFilter() {
     return Container(

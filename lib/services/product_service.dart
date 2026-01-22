@@ -13,7 +13,7 @@ class ProductService {
   Future<List<Kategori>> getCategories() async {
     try {
       final response = await _dio.get('/products/categories');
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 304) {
         List<dynamic> data = response.data;
         return data.map((json) => Kategori.fromMap(json)).toList();
       }
@@ -56,24 +56,19 @@ class ProductService {
 
   // --- PRODUCTS ---
 
-  Future<List<Barang>> getProducts() async {
+  Future<List<Barang>> getProducts({int page = 1, int limit = 100}) async {
     try {
-      final response = await _dio.get('/products');
-      print('GET /products status: ${response.statusCode}');
-      if (response.statusCode == 200) {
+      final response = await _dio.get('/products', queryParameters: {
+        'page': page,
+        'limit': limit,
+      });
+      
+      if (response.statusCode == 200 || response.statusCode == 304) {
         List<dynamic> data = response.data;
-        return data.map((json) {
-           try {
-             return Barang.fromMap(json);
-           } catch (e) {
-             print('Error parsing Barang: $e, json: $json');
-             rethrow;
-           }
-        }).toList();
+        return data.map((json) => Barang.fromMap(json)).toList();
       }
       return [];
     } catch (e) {
-      print('Exception in getProducts: $e');
       throw Exception('Gagal memuat produk: $e');
     }
   }
@@ -81,7 +76,7 @@ class ProductService {
   Future<List<Barang>> getLowStockProducts() async {
     try {
       final response = await _dio.get('/products/low-stock');
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 304) {
         List<dynamic> data = response.data;
         return data.map((json) => Barang.fromMap(json)).toList();
       }

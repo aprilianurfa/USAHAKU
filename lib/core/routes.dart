@@ -28,6 +28,7 @@ import '../pages/report/capital_report.dart';
 import '../pages/report/expense_report.dart';
 import '../pages/report/visitor_report.dart';
 import '../pages/report/transaction_report.dart';
+import '../pages/report/shift_report_page.dart';
 
 // PROFILE & SETTINGS
 import '../pages/profile/profile_page.dart';
@@ -63,6 +64,7 @@ class AppRoutes {
     '/report-expense': (context) => const ExpenseReportPage(),
     '/report-visitor': (context) => const VisitorReportPage(),
     '/report-transaction': (context) => const TransactionReportPage(),
+    '/report-shift': (context) => const ShiftReportPage(),
 
     // PROFILE & SETTINGS
     '/profile': (context) => const ProfilePage(),

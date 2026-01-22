@@ -6,6 +6,10 @@ import '../../models/purchase_model.dart';
 import '../../models/purchase_item_model.dart';
 import '../../services/product_service.dart';
 import '../../services/purchase_service.dart';
+import '../../widgets/app_drawer.dart';
+import '../../providers/purchase_provider.dart';
+import '../../models/purchase_hive.dart';
+import 'package:provider/provider.dart';
 
 class PurchasePage extends StatefulWidget {
   const PurchasePage({super.key});
@@ -78,23 +82,27 @@ class _PurchasePageState extends State<PurchasePage> {
 
     setState(() => _isLoading = true);
     try {
-      final pembelian = Pembelian(
-        id: "", // Server will generate
+      final purchaseHive = PurchaseHive(
+        id: "LP-${DateTime.now().millisecondsSinceEpoch}",
         tanggal: DateTime.now(),
         supplier: _supplierController.text.trim(),
         totalBiaya: _totalBiaya,
         keterangan: _notesController.text.trim(),
-        items: _cart,
+        items: _cart.map((i) => PurchaseItemHive(
+          productId: i.productId,
+          productName: i.productName ?? "",
+          jumlah: i.jumlah,
+          hargaBeli: i.hargaBeli,
+        )).toList(),
       );
 
-      final result = await _purchaseService.createPurchase(pembelian);
-      if (result != null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Pembelian berhasil disimpan. Stok diperbarui.')),
-          );
-          Navigator.pop(context, true);
-        }
+      await context.read<PurchaseProvider>().saveLocalPurchase(purchaseHive);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Pembelian berhasil disimpan secara lokal dan akan disinkronkan.')),
+        );
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
@@ -111,15 +119,50 @@ class _PurchasePageState extends State<PurchasePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
+      drawer: const AppDrawer(),
+      appBar: AppBar(
+        title: const Text("Input Pembelian Barang", style: TextStyle(fontWeight: FontWeight.bold)),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: AppTheme.defaultGradient,
+          ),
+        ),
+        foregroundColor: Colors.white,
+      ),
       body: Column(
         children: [
-          _buildHeader(),
-          _buildTotalSummary(), // Fixed at top
+          // Stack for Header Extension and Floating Card
+          Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.topCenter,
+            children: [
+              // Blue background extension
+              Container(
+                width: double.infinity,
+                height: 50, 
+                decoration: const BoxDecoration(
+                  gradient: AppTheme.defaultGradient,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(30),
+                    bottomRight: Radius.circular(30),
+                  ),
+                ),
+              ),
+              // Floating Card
+              Padding(
+                padding: const EdgeInsets.only(top: 10), // Small gap from top
+                child: _buildTotalSummary(),
+              ),
+            ],
+          ),
+          
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
-                const SizedBox(height: 16),
+                const SizedBox(height: 10), // Space after card (card height is included in flow but needs visual spacing)
                 _buildForm(),
                 const SizedBox(height: 20),
                 Row(
@@ -178,41 +221,7 @@ class _PurchasePageState extends State<PurchasePage> {
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: EdgeInsets.fromLTRB(10, 20 + MediaQuery.of(context).padding.top, 10, 20),
-      decoration: const BoxDecoration(
-        color: AppTheme.primaryColor,
-        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30)),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: IconButton(
-                  onPressed: () => Navigator.pop(context), 
-                  icon: const Icon(Icons.arrow_back, color: Colors.white)
-                ),
-              ),
-              const Expanded(
-                child: Text(
-                  "Input Pembelian Barang",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(width: 48),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildForm() {
     return Container(
@@ -338,22 +347,54 @@ class _PurchasePageState extends State<PurchasePage> {
   Widget _buildTotalSummary() {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-      transform: Matrix4.translationValues(0, -15, 0), // Floating effect
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      // transform removed, handled by parent Stack
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        // Use a very subtle border instead of shadow for flat design
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E3A8A).withOpacity(0.15), // Deep blue shadow
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text("Total Pembelian", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey)),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Total Pembelian",
+                style: TextStyle(
+                  fontSize: 14, 
+                  color: Colors.grey, 
+                  fontWeight: FontWeight.w600
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Icon(Icons.receipt_long_rounded, size: 16, color: AppTheme.primaryColor),
+                  const SizedBox(width: 5),
+                  Text(
+                    "${_cart.length} Item",
+                    style: const TextStyle(fontSize: 12, color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              )
+            ],
+          ),
           Text(
             currencyFormatter.format(_totalBiaya), 
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)
+            style: const TextStyle(
+              fontSize: 24, 
+              fontWeight: FontWeight.w800, 
+              color: AppTheme.primaryColor
+            )
           ),
         ],
       ),
