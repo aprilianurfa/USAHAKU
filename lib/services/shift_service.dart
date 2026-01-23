@@ -38,7 +38,8 @@ class ShiftService {
 
   Future<dynamic> getCurrentShift() async {
     try {
-      final response = await _dio.get("/shift/current");
+      // Add timestamp to prevent caching
+      final response = await _dio.get("/shift/current?_t=${DateTime.now().millisecondsSinceEpoch}");
       return response.data; // Returns null if no shift is open
     } on DioException catch (e) {
       // If 404/Null - treat as no shift
@@ -48,7 +49,8 @@ class ShiftService {
 
   Future<dynamic> getShiftSummary() async {
     try {
-      final response = await _dio.get("/shift/summary");
+      // Add timestamp to prevent caching
+      final response = await _dio.get("/shift/summary?_t=${DateTime.now().millisecondsSinceEpoch}");
       return response.data;
     } on DioException catch (e) {
       return e.response?.data ?? {"error": "Gagal memuat ringkasan shift"};

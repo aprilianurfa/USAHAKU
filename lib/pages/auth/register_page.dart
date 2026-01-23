@@ -40,6 +40,19 @@ class _RegisterPageState extends State<RegisterPage> {
         
         // NEW: Check if token is directly returned (Auto Login V2)
         if (result['token'] != null) {
+             // SAVE SESSION DATA MANUALLY
+             final token = result['token'];
+             final user = result['user'];
+             
+             await _authService.saveSessionManual(
+               token: token,
+               role: user != null && user['role'] != null ? user['role'] : 'owner', // Fallback to owner
+               name: user != null ? user['nama'] : null,
+               shopId: user != null && user['shop_id'] != null ? user['shop_id'].toString() : null,
+               shopName: user != null ? user['shop_name'] : null,
+               shopLogo: user != null ? user['shop_logo'] : null,
+             );
+
              setState(() => _isLoading = false);
              if (!mounted) return;
              

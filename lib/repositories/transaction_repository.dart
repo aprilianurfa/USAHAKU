@@ -3,47 +3,25 @@ import '../models/transaction_item_model.dart';
 import '../models/transaction_hive.dart';
 import '../services/transaction_service.dart';
 import '../services/local_storage_service.dart';
+import 'sync_repository.dart';
 
 class TransactionRepository {
   final TransactionService _service = TransactionService();
   final LocalStorageService _local = LocalStorageService();
 
-  Future<List<Transaksi>> getAllTransactions({DateTime? startDate, DateTime? endDate, String? namaPelanggan}) async {
-    // 1. Fetch from API (Remote)
-    List<Transaksi> remoteTxs = [];
-    bool remoteSuccess = false;
-    try {
-      remoteTxs = await _service.getTransactions(
-        startDate: startDate, 
-        endDate: endDate, 
-        namaPelanggan: namaPelanggan
-      );
-      remoteSuccess = true;
-    } catch (e) {
-      print("Remote fetch failed: $e. Falling back to local only.");
-    }
+  final SyncRepository _syncRepo = SyncRepository();
 
-    // 2. Fetch from Local Hive
-    // We fetch ALL local transactions if remote failed, 
-    // OR just the UNSYNCED ones if remote succeeded.
+  /// Get transactions from Local Storage (Instant, Offline-first)
+  Future<List<Transaksi>> getAllTransactions({DateTime? startDate, DateTime? endDate, String? namaPelanggan}) async {
+    // 1. Fetch from Local Hive (Single Source of Truth)
     final localHiveTxs = _local.getLocalTransactions();
     
-    final List<Transaksi> localToInclude = localHiveTxs
-        .where((t) {
-            // If remote succeeded, only include what hasn't been sent yet.
-            // If remote failed, include EVERYTHING we have locally.
-            if (remoteSuccess) {
-              return !t.isSynced;
-            }
-            return true;
-        })
+    final List<Transaksi> filteredTxs = localHiveTxs
         .map((t) => _mapHiveToTransaksi(t))
         .where((t) {
             // Apply Filters locally
             bool dateMatch = true;
             if (startDate != null && endDate != null) {
-               // Normalizing end date to end of day is handled by the caller, 
-               // but we do a safe check here.
                dateMatch = t.tanggal.isAfter(startDate.subtract(const Duration(seconds: 1))) && 
                           t.tanggal.isBefore(endDate.add(const Duration(days: 1)));
             }
@@ -55,21 +33,16 @@ class TransactionRepository {
         })
         .toList();
 
-    // 3. Merge & Deduplicate
-    // Use a Map to deduplicate by ID if necessary (remote might have just finished syncing)
-    final Map<String, Transaksi> dedupMap = {};
+    // 2. Sort by Date Descending
+    filteredTxs.sort((a, b) => b.tanggal.compareTo(a.tanggal));
     
-    for (var tx in remoteTxs) {
-      dedupMap[tx.id] = tx;
-    }
-    for (var tx in localToInclude) {
-      dedupMap[tx.id] = tx;
-    }
+    return filteredTxs;
+  }
 
-    final combined = dedupMap.values.toList();
-    combined.sort((a, b) => b.tanggal.compareTo(a.tanggal));
-    
-    return combined;
+  /// Trigger a background sync to update local data
+  Future<void> sync() async {
+    await _syncRepo.performDeltaSync(); // Pull new remotely
+    await _syncRepo.processSyncQueue(); // Push local changes
   }
 
   Transaksi _mapHiveToTransaksi(TransactionHive h) {

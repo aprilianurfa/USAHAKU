@@ -104,6 +104,30 @@ class AuthService {
     ApiClient.clearCache();
   }
 
+  // MANUAL SAVE SESSION (For Registration direct login)
+  Future<void> saveSessionManual({
+    required String token,
+    required String role,
+    String? name,
+    String? shopId,
+    String? shopName,
+    String? shopLogo,
+  }) async {
+    // 1. Cleanup old session
+    await _storage.deleteAll();
+    await LocalStorageService().clearAll();
+    ApiClient.clearCache();
+
+    // 2. Write new session
+    await _storage.write(key: 'token', value: token);
+    await _storage.write(key: 'role', value: role);
+    
+    if (name != null) await _storage.write(key: 'userName', value: name);
+    if (shopId != null) await _storage.write(key: 'shopId', value: shopId);
+    if (shopName != null) await _storage.write(key: 'shopName', value: shopName);
+    if (shopLogo != null) await _storage.write(key: 'shopLogo', value: shopLogo);
+  }
+
   // GET CURRENT ROLE
   Future<String?> getRole() async {
     return await _storage.read(key: 'role');

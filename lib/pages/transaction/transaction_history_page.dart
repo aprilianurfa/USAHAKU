@@ -39,7 +39,12 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
 
   Future<void> _fetchInitialData() async {
     await _fetchCustomerNames();
-    _fetchTransactions();
+    _fetchTransactions(); // Load local data immediately
+    
+    // Background Sync
+    _transactionRepository.sync().then((_) {
+      if (mounted) _fetchTransactions(); // Refresh UI after sync completes
+    });
   }
 
   Future<void> _fetchCustomerNames() async {
@@ -55,9 +60,13 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
     }
   }
 
-  Future<void> _fetchTransactions() async {
+  Future<void> _fetchTransactions({bool forceSync = false}) async {
     if (mounted) setState(() => _isLoading = true);
     try {
+      if (forceSync) {
+        await _transactionRepository.sync();
+      }
+
       // Set end of day for the end date to catch all transactions on that day
       DateTime endOfDay = DateTime(_selectedDateRange!.end.year, _selectedDateRange!.end.month, _selectedDateRange!.end.day, 23, 59, 59);
       
@@ -190,7 +199,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
           ),
           const SizedBox(width: 10),
           IconButton(
-            onPressed: _fetchTransactions,
+            onPressed: () => _fetchTransactions(forceSync: true),
             icon: const Icon(Icons.refresh, color: AppTheme.primaryColor),
           )
         ],
