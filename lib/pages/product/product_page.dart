@@ -42,6 +42,8 @@ class _ProductPageState extends State<ProductPage> {
     }).toList();
 
     int lowStockCount = allProducts.where((b) => b.stok <= b.minStok).length;
+    final String userRole = context.watch<ProductProvider>().userRole;
+    final bool isOwner = userRole == 'owner';
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
@@ -58,8 +60,17 @@ class _ProductPageState extends State<ProductPage> {
         title: const Text('Manajemen Barang', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
-            onPressed: () => productProvider.performSync(),
-            icon: Icon(productProvider.isLoading ? Icons.sync : Icons.refresh),
+            onPressed: () {
+              productProvider.performSync();
+              if (productProvider.error != null) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(productProvider.error!)));
+              }
+            },
+            icon: Icon(
+              productProvider.isLoading ? Icons.sync : (productProvider.error != null ? Icons.warning_amber_rounded : Icons.refresh),
+              color: productProvider.error != null ? Colors.orangeAccent : Colors.white,
+            ),
+            tooltip: productProvider.error ?? 'Refresh Data',
           ),
           Stack(
             alignment: Alignment.center,
@@ -156,14 +167,14 @@ class _ProductPageState extends State<ProductPage> {
                     itemCount: filteredProducts.length,
                     itemBuilder: (context, index) {
                       final item = filteredProducts[index];
-                      return _buildProductCard(item, AppTheme.primaryColor);
+                      return _buildProductCard(item, AppTheme.primaryColor, isOwner);
                     },
                   ),
           ),
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Padding(
+      floatingActionButton: !isOwner ? null : Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: SizedBox(
           width: double.infinity,
@@ -207,7 +218,7 @@ class _ProductPageState extends State<ProductPage> {
     );
   }
 
-  Widget _buildProductCard(ProductHive item, Color primaryColor) {
+  Widget _buildProductCard(ProductHive item, Color primaryColor, bool isOwner) {
     bool isLow = item.stok <= item.minStok;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -266,7 +277,7 @@ class _ProductPageState extends State<ProductPage> {
               ),
             ],
           ),
-          trailing: const Icon(Icons.edit, size: 20, color: Colors.grey),
+          trailing: isOwner ? const Icon(Icons.edit, size: 20, color: Colors.grey) : null,
         ),
       ),
     );

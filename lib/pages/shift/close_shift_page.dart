@@ -92,11 +92,11 @@ class _CloseShiftPageState extends State<CloseShiftPage> {
       return;
     }
 
-    setState(() => _isSubmitting = true);
+    if (mounted) setState(() => _isSubmitting = true);
 
     final result = await _shiftService.closeShift(_actualCash);
 
-    setState(() => _isSubmitting = false);
+    if (mounted) setState(() => _isSubmitting = false);
 
     if (result != null && result['error'] == null) {
        // Extract compare data

@@ -25,6 +25,22 @@ class AuthService {
           "nama_toko": namaUsaha,
         },
       );
+
+      // AUTO LOGIN START
+      if (response.data['token'] != null) {
+        await _storage.write(key: 'token', value: response.data['token']);
+        
+        final user = response.data['user'];
+        if (user != null) {
+          if (user['role'] != null) await _storage.write(key: 'role', value: user['role']);
+          if (user['nama'] != null) await _storage.write(key: 'userName', value: user['nama']);
+          if (user['shop_id'] != null) await _storage.write(key: 'shopId', value: user['shop_id'].toString());
+          if (user['shop_name'] != null) await _storage.write(key: 'shopName', value: user['shop_name']);
+          if (user['shop_logo'] != null) await _storage.write(key: 'shopLogo', value: user['shop_logo']);
+        }
+      }
+      // AUTO LOGIN END
+
       return response.data;
     } on DioException catch (e) {
       if (e.type == DioExceptionType.connectionTimeout || 
@@ -47,10 +63,14 @@ class AuthService {
       );
 
       if (response.statusCode == 200) {
-        // Simpan token untuk proteksi route (add-staff, dll)
+        // --- FAILSAFE CLEANUP ---
+        await _storage.deleteAll();
+        await LocalStorageService().clearAll();
+        ApiClient.clearCache();
+
+        // Save new token
         await _storage.write(key: 'token', value: response.data['token']);
         
-        // Simpan role & shopId untuk proteksi menu di frontend dan API calls
         final user = response.data['user'];
         if (user != null) {
           if (user['role'] != null) await _storage.write(key: 'role', value: user['role']);
@@ -72,6 +92,7 @@ class AuthService {
     } catch (e) {
        return {"error": "Terjadi kesalahan saat login"};
     }
+    return {"error": "Unknown error"};
   }
 
   // LOGOUT (Optional helper)
@@ -79,6 +100,8 @@ class AuthService {
     await _storage.deleteAll();
     // Clear Hive Offline Storage
     await LocalStorageService().clearAll();
+    // Clear Memory Cache
+    ApiClient.clearCache();
   }
 
   // GET CURRENT ROLE

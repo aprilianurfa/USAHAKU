@@ -14,6 +14,14 @@ class ProductRepository {
     return await _localService.getProducts();
   }
 
+  Future<void> saveLocalProduct(ProductHive product) async {
+    await _localService.saveProduct(product);
+  }
+
+  Future<ProductHive?> getLocalProduct(String id) async {
+    return await _localService.getProduct(id);
+  }
+
   List<CategoryHive> getLocalCategories() {
     return _localService.getLocalCategories();
   }

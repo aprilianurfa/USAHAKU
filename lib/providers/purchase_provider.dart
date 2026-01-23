@@ -88,4 +88,11 @@ class PurchaseProvider with ChangeNotifier {
   Future<void> syncData() async {
     await performSync();
   }
+
+  void resetState() {
+    _purchases = [];
+    _isLoading = false;
+    _error = null;
+    notifyListeners();
+  }
 }

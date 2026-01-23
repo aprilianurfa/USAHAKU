@@ -65,4 +65,9 @@ class ApiClient {
       },
     ));
   }
+
+  static void clearCache() {
+    _etagCache.clear();
+    _dataCache.clear();
+  }
 }

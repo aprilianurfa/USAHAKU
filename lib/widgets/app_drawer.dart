@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../core/theme.dart';
 import '../config/constants.dart';
+import 'package:provider/provider.dart';
+import '../providers/product_provider.dart';
+import '../providers/dashboard_provider.dart';
+import '../providers/purchase_provider.dart';
 
 class AppDrawer extends StatefulWidget {
   const AppDrawer({super.key});
@@ -36,8 +40,16 @@ class _AppDrawerState extends State<AppDrawer> {
   }
 
   void _logout() async {
+    // 1. Perform Storage & API Cache Cleanup
     await _authService.logout();
+    
+    // 2. Reset All Provider States (ensure UI doesn't flicker old data on next login)
     if (mounted) {
+      context.read<ProductProvider>().resetState();
+      context.read<DashboardProvider>().resetState();
+      context.read<PurchaseProvider>().resetState();
+      
+      // 3. Absolute Navigation to Login
       Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
     }
   }

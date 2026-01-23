@@ -68,6 +68,7 @@ class LocalStorageService {
   // --- PRODUCTS (Updated for LazyBox) ---
 
   Future<void> saveProducts(List<ProductHive> products, {bool clear = false}) async {
+    await init();
     final box = Hive.lazyBox<ProductHive>(productBoxName);
     if (clear) await box.clear();
     final Map<String, ProductHive> productMap = {
@@ -77,6 +78,7 @@ class LocalStorageService {
   }
 
   Future<List<ProductHive>> getProducts() async {
+    await init();
     final box = Hive.lazyBox<ProductHive>(productBoxName);
     if (box.isEmpty) return [];
     
@@ -90,9 +92,28 @@ class LocalStorageService {
       .toList();
   }
 
+  Future<void> saveProduct(ProductHive product) async {
+    await init();
+    final box = Hive.lazyBox<ProductHive>(productBoxName);
+    await box.put(product.id, product);
+  }
+
+  Future<ProductHive?> getProduct(String id) async {
+    await init();
+    final box = Hive.lazyBox<ProductHive>(productBoxName);
+    return await box.get(id);
+  }
+
+  Future<void> deleteProductFromDisk(String id) async {
+    await init();
+    final box = Hive.lazyBox<ProductHive>(productBoxName);
+    await box.delete(id);
+  }
+
   // --- CATEGORIES ---
 
   Future<void> saveCategories(List<CategoryHive> categories, {bool clear = false}) async {
+    await init();
     final box = Hive.box<CategoryHive>(categoryBoxName);
     if (clear) await box.clear();
     final Map<String, CategoryHive> categoryMap = {
@@ -102,17 +123,20 @@ class LocalStorageService {
   }
 
   List<CategoryHive> getLocalCategories() {
+    if (!Hive.isBoxOpen(categoryBoxName)) return [];
     final box = Hive.box<CategoryHive>(categoryBoxName);
     // Filter out deleted items for UI
     return box.values.where((c) => !c.isDeleted).toList();
   }
 
   Future<void> saveCategory(CategoryHive category) async {
+    await init();
     final box = Hive.box<CategoryHive>(categoryBoxName);
     await box.put(category.id, category);
   }
 
   Future<void> deleteCategory(String id) async {
+    await init();
     final box = Hive.box<CategoryHive>(categoryBoxName);
     final cat = box.get(id);
     if (cat != null) {
@@ -128,12 +152,24 @@ class LocalStorageService {
 
   // --- TRANSACTIONS ---
 
+  Future<void> saveTransactions(List<TransactionHive> transactions, {bool clear = false}) async {
+    await init();
+    final box = Hive.box<TransactionHive>(transactionBoxName);
+    if (clear) await box.clear();
+    final Map<String, TransactionHive> txMap = {
+      for (var t in transactions) t.id: t
+    };
+    await box.putAll(txMap);
+  }
+
   Future<void> saveTransaction(TransactionHive transaction) async {
+    await init();
     final box = Hive.box<TransactionHive>(transactionBoxName);
     await box.put(transaction.id, transaction);
   }
 
   List<TransactionHive> getLocalTransactions() {
+    if (!Hive.isBoxOpen(transactionBoxName)) return [];
     final box = Hive.box<TransactionHive>(transactionBoxName);
     return box.values.toList();
   }
@@ -143,6 +179,7 @@ class LocalStorageService {
   // --- PURCHASES (Updated for LazyBox) ---
 
   Future<void> savePurchases(List<PurchaseHive> purchases, {bool clear = false}) async {
+    await init();
     final box = Hive.lazyBox<PurchaseHive>(purchaseBoxName);
     if (clear) await box.clear();
     final Map<String, PurchaseHive> purchaseMap = {
@@ -152,11 +189,13 @@ class LocalStorageService {
   }
 
   Future<void> savePurchase(PurchaseHive purchase) async {
+    await init();
     final box = Hive.lazyBox<PurchaseHive>(purchaseBoxName);
     await box.put(purchase.id, purchase);
   }
 
   Future<List<PurchaseHive>> getPurchases() async {
+    await init();
     final box = Hive.lazyBox<PurchaseHive>(purchaseBoxName);
     if (box.isEmpty) return [];
 
@@ -169,16 +208,19 @@ class LocalStorageService {
   // --- SYNC QUEUE ---
 
   Future<void> addToQueue(SyncQueueItem item) async {
+    await init();
     final box = Hive.box<SyncQueueItem>(syncQueueBoxName);
     await box.put(item.id, item);
   }
 
   Future<void> removeFromQueue(String id) async {
+    await init();
     final box = Hive.box<SyncQueueItem>(syncQueueBoxName);
     await box.delete(id);
   }
 
   List<SyncQueueItem> getQueue() {
+    if (!Hive.isBoxOpen(syncQueueBoxName)) return [];
     final box = Hive.box<SyncQueueItem>(syncQueueBoxName);
     return box.values.toList();
   }
@@ -186,22 +228,61 @@ class LocalStorageService {
   // --- SETTINGS (Last Sync Time) ---
 
   Future<void> setLastSyncTime(DateTime time) async {
+    await init();
     final box = Hive.box(settingsBoxName);
     await box.put('lastSyncTime', time.toIso8601String());
   }
 
+  Future<void> setLastSyncedShopId(String shopId) async {
+    await init();
+    final box = Hive.box(settingsBoxName);
+    await box.put('lastSyncedShopId', shopId);
+  }
+
   DateTime? getLastSyncTime() {
+    if (!Hive.isBoxOpen(settingsBoxName)) return null;
     final box = Hive.box(settingsBoxName);
     final str = box.get('lastSyncTime');
     return str != null ? DateTime.parse(str) : null;
   }
 
+  String? getLastSyncedShopId() {
+    if (!Hive.isBoxOpen(settingsBoxName)) return null;
+    final box = Hive.box(settingsBoxName);
+    return box.get('lastSyncedShopId');
+  }
+
   Future<void> clearAll() async {
-    await Hive.lazyBox<ProductHive>(productBoxName).clear();
-    await Hive.box<CategoryHive>(categoryBoxName).clear();
-    await Hive.box<TransactionHive>(transactionBoxName).clear();
-    await Hive.lazyBox<PurchaseHive>(purchaseBoxName).clear();
-    await Hive.box<SyncQueueItem>(syncQueueBoxName).clear();
-    await Hive.box(settingsBoxName).clear();
+    try {
+      // 1. Ensure all boxes are open before clearing (to avoid errors)
+      await _openAllBoxes();
+
+      // 2. Clear all boxes
+      await Future.wait([
+        Hive.lazyBox<ProductHive>(productBoxName).clear(),
+        Hive.box<CategoryHive>(categoryBoxName).clear(),
+        Hive.box<TransactionHive>(transactionBoxName).clear(),
+        Hive.lazyBox<PurchaseHive>(purchaseBoxName).clear(),
+        Hive.box<SyncQueueItem>(syncQueueBoxName).clear(),
+        Hive.box(settingsBoxName).clear(),
+      ]);
+
+      // 3. Close all boxes to release file locks
+      await Hive.close();
+
+      // 4. Delete boxes from disk to be ABSOLUTELY sure (Nuclear Logout)
+      final boxes = [
+        productBoxName, categoryBoxName, transactionBoxName,
+        purchaseBoxName, syncQueueBoxName, settingsBoxName
+      ];
+      for (final box in boxes) {
+        await Hive.deleteBoxFromDisk(box);
+      }
+    } catch (e) {
+      debugPrint("Error during clearAll: $e");
+    } finally {
+      // 5. Reset the init future
+      _initFuture = null;
+    }
   }
 }

@@ -37,7 +37,21 @@ class _RegisterPageState extends State<RegisterPage> {
       if (!mounted) return;
 
       if (result != null && (result['message'] != null || result['userId'] != null || result['id'] != null)) {
-        // Registration Successful - Now Auto Login
+        
+        // NEW: Check if token is directly returned (Auto Login V2)
+        if (result['token'] != null) {
+             setState(() => _isLoading = false);
+             if (!mounted) return;
+             
+             ScaffoldMessenger.of(context).showSnackBar(
+               const SnackBar(content: Text('Registrasi Berhasil! Selamat Datang Owner.'), backgroundColor: Colors.green),
+             );
+             
+             Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (route) => false);
+             return;
+        }
+
+        // Registration Successful - Legacy Fallback
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Registrasi berhasil, sedang login...'), backgroundColor: Colors.green),
         );

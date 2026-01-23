@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import '../models/product_hive.dart';
@@ -7,6 +8,7 @@ import '../models/sync_queue.dart';
 import '../repositories/product_repository.dart';
 import '../repositories/sync_repository.dart';
 import '../services/local_storage_service.dart';
+import '../config/storage_config.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ProductProvider with ChangeNotifier {
@@ -15,6 +17,7 @@ class ProductProvider with ChangeNotifier {
 
   List<ProductHive> _products = [];
   List<CategoryHive> _categories = [];
+  String _userRole = 'kasir';
   bool _isLoading = false;
   String? _error;
   
@@ -25,6 +28,7 @@ class ProductProvider with ChangeNotifier {
 
   List<ProductHive> get products => _products;
   List<CategoryHive> get categories => _categories;
+  String get userRole => _userRole;
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get hasMore => _hasMore;
@@ -39,6 +43,11 @@ class ProductProvider with ChangeNotifier {
   Future<void> loadProducts() async {
     _products = await _repository.getLocalProducts();
     _categories = _repository.getLocalCategories();
+    
+    // Load Role
+    final role = await StorageConfig.storage.read(key: 'role');
+    _userRole = role ?? 'kasir';
+    
     notifyListeners();
 
     _currentPage = 1;
@@ -109,22 +118,63 @@ class ProductProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool isDuplicateName(String name, {String? excludeId}) {
+    // Check against all products in memory (which reflects local storage)
+    return _products.any((p) {
+      if (excludeId != null && p.id == excludeId) return false;
+      return p.nama.toLowerCase() == name.toLowerCase() && !p.isDeleted;
+    });
+  }
+
   // --- OPTIMISTIC UI UTILS ---
 
   Future<void> saveLocalTransaction(TransactionHive tx) async {
+    // 1. Save Transaction Record
     await _repository.saveTransaction(tx);
+    
+    // 2. DEDUCT STOCK LOCALLY (Optimistic Update)
+    for (var item in tx.items) {
+      final product = await _repository.getLocalProduct(item.productId);
+      if (product != null) {
+        final updatedProduct = ProductHive(
+          id: product.id,
+          nama: product.nama,
+          kategoriId: product.kategoriId,
+          harga: product.harga,
+          hargaDasar: product.hargaDasar,
+          stok: product.stok - item.qty,
+          minStok: product.minStok,
+          barcode: product.barcode,
+          isJasa: product.isJasa,
+          image: product.image,
+          isDeleted: product.isDeleted,
+        );
+        await _repository.saveLocalProduct(updatedProduct);
+      }
+    }
+    
+    // 3. Refresh UI
+    _products = await _repository.getLocalProducts();
+    notifyListeners();
   }
 
-  Future<void> saveLocalProduct(ProductHive product) async {
+  Future<void> saveLocalProduct(ProductHive product, {Uint8List? imageBytes, String? imageFilename}) async {
     // 1. Save to local
-    final box = Hive.lazyBox<ProductHive>(LocalStorageService.productBoxName);
-    await box.put(product.id, product);
+    await _repository.saveLocalProduct(product);
     
-    // 2. Add to queue
+    // 2. Determine Sync Action
+    // If ID is local (starts with LOC-), it's a new creation.
+    // If ID is from server (no LOC-), it's an update.
+    final isLocal = product.id.toString().startsWith('LOC-');
+    final action = isLocal ? 'CREATE' : 'UPDATE';
+
+    // 3. Add to queue
     await addToSyncQueue(
-      action: 'CREATE', // SyncRepository logic will need to handle UPDATE too
+      action: action, 
       entity: 'PRODUCT',
       data: product.toMap(),
+      imageBytes: imageBytes,
+      imageFilename: imageFilename,
     );
     
     _products = await _repository.getLocalProducts();
@@ -132,8 +182,7 @@ class ProductProvider with ChangeNotifier {
   }
 
   Future<void> deleteLocalProduct(String id) async {
-    final box = Hive.lazyBox<ProductHive>(LocalStorageService.productBoxName);
-    final p = await box.get(id);
+    final p = await _repository.getLocalProduct(id);
     if (p != null) {
       final deleted = ProductHive(
         id: p.id,
@@ -148,7 +197,7 @@ class ProductProvider with ChangeNotifier {
         image: p.image,
         isDeleted: true,
       );
-      await box.put(id, deleted);
+      await _repository.saveLocalProduct(deleted);
       
       await addToSyncQueue(
         action: 'DELETE',
@@ -176,7 +225,15 @@ class ProductProvider with ChangeNotifier {
     required String action,
     required String entity,
     required Map<String, dynamic> data,
+    Uint8List? imageBytes,
+    String? imageFilename,
   }) async {
+    // Inject Image Data into Map for Queue Storage
+    if (imageBytes != null) {
+      data['imageBytes'] = imageBytes;
+      data['imageFilename'] = imageFilename;
+    }
+
     final item = SyncQueueItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       action: action,
@@ -197,5 +254,16 @@ class ProductProvider with ChangeNotifier {
        });
     }
     notifyListeners(); 
+  }
+
+  void resetState() {
+    _products = [];
+    _categories = [];
+    _userRole = 'kasir';
+    _isLoading = false;
+    _error = null;
+    _currentPage = 1;
+    _hasMore = true;
+    notifyListeners();
   }
 }

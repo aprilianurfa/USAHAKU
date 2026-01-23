@@ -63,15 +63,13 @@ class DashboardProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1. Delta Sync (Inbound)
+      // 1. Delta Sync (Inbound & Outbound)
       final syncRepo = SyncRepository();
       await syncRepo.performDeltaSync();
-
-      // 2. Process Queue (Outbound)
       await syncRepo.processSyncQueue();
 
-      // 3. Refresh Dashboard with Fresh Data
-      await refreshDashboard();
+      // 2. Refresh the statistics from Server
+      await _fetchDashboardStats();
     } catch (e) {
       debugPrint("Delta Sync Failure: $e");
     } finally {
@@ -81,22 +79,34 @@ class DashboardProvider with ChangeNotifier {
   }
 
   Future<void> refreshDashboard() async {
+    // Top-level refresh: perform sync which then updates stats
+    await syncData();
+  }
+
+  /// Internal method to fetch fresh stats from server
+  Future<void> _fetchDashboardStats() async {
     try {
+      // Always re-load user context (role, shop name) 
+      await _loadUserFromStorage();
+
       // Refresh Shift Status
       _currentShift = await _shiftService.getCurrentShift();
       
+      DateTime? startTime;
       if (_currentShift != null) {
         final startTimeStr = _currentShift!['startTime'] ?? _currentShift!['start_time'];
-        final startTime = startTimeStr != null ? DateTime.tryParse(startTimeStr) : null;
-        _summary = await _transactionService.getDashboardSummary(startTime: startTime);
+        startTime = startTimeStr != null ? DateTime.tryParse(startTimeStr) : null;
       }
 
+      // Fetch Summary (Sales, Trx Count, Profit)
+      _summary = await _transactionService.getDashboardSummary(startTime: startTime);
+
+      // Low Stock Alert
       final lowStockProducts = await _productService.getLowStockProducts();
       _lowStockCount = lowStockProducts.length;
 
-      notifyListeners();
     } catch (e) {
-      debugPrint("Dashboard Refresh Error: $e");
+      debugPrint("Stats Fetch Error: $e");
     }
   }
 
@@ -108,6 +118,17 @@ class DashboardProvider with ChangeNotifier {
     _role = role ?? 'kasir';
     _shopName = shopName ?? 'Toko Anda';
     _shopLogo = shopLogo;
+    notifyListeners();
+  }
+
+  void resetState() {
+    _summary = null;
+    _currentShift = null;
+    _role = 'kasir';
+    _shopName = 'Toko Anda';
+    _shopLogo = null;
+    _lowStockCount = 0;
+    _isLoading = false;
     notifyListeners();
   }
 }

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme.dart';
 import '../../models/transaction_model.dart';
 import '../../services/transaction_service.dart';
+import '../../repositories/transaction_repository.dart';
 import '../../widgets/app_drawer.dart';
 
 class TransactionHistoryPage extends StatefulWidget {
@@ -13,6 +14,7 @@ class TransactionHistoryPage extends StatefulWidget {
 }
 
 class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
+  final TransactionRepository _transactionRepository = TransactionRepository();
   final TransactionService _transactionService = TransactionService();
   final NumberFormat currencyFormatter = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
   final DateFormat dateFormatter = DateFormat('dd MMM yyyy, HH:mm');
@@ -54,23 +56,25 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
   }
 
   Future<void> _fetchTransactions() async {
-    setState(() => _isLoading = true);
+    if (mounted) setState(() => _isLoading = true);
     try {
       // Set end of day for the end date to catch all transactions on that day
       DateTime endOfDay = DateTime(_selectedDateRange!.end.year, _selectedDateRange!.end.month, _selectedDateRange!.end.day, 23, 59, 59);
       
-      final data = await _transactionService.getTransactions(
+      final data = await _transactionRepository.getAllTransactions(
         startDate: _selectedDateRange!.start,
         endDate: endOfDay,
         namaPelanggan: _selectedCustomer,
       );
-      setState(() {
-        _transactions = data;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
       if (mounted) {
+        setState(() {
+          _transactions = data;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Gagal: $e")));
       }
     }
