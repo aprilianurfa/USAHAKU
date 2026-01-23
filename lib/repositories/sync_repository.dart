@@ -1,18 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:http_parser/http_parser.dart'; // Added
-import 'dart:typed_data'; // Added for Uint8List check
-import '../models/product_hive.dart';
-import '../models/category_hive.dart';
-import '../models/transaction_hive.dart';
-import '../models/purchase_hive.dart';
-import '../models/sync_queue.dart';
-import '../services/local_storage_service.dart';
-import '../services/auth_service.dart';
-import '../config/constants.dart';
-
-import 'package:dio/dio.dart';
-import 'package:http_parser/http_parser.dart'; 
-import 'dart:typed_data'; 
+import 'package:http_parser/http_parser.dart';
+import 'dart:typed_data';
 import '../models/product_hive.dart';
 import '../models/category_hive.dart';
 import '../models/transaction_hive.dart';
