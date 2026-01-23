@@ -34,6 +34,8 @@ class AuthService {
         if (user != null) {
           if (user['role'] != null) await _storage.write(key: 'role', value: user['role']);
           if (user['nama'] != null) await _storage.write(key: 'userName', value: user['nama']);
+          if (user['email'] != null) await _storage.write(key: 'userEmail', value: user['email']);
+          if (user['id'] != null) await _storage.write(key: 'userId', value: user['id'].toString());
           if (user['shop_id'] != null) await _storage.write(key: 'shopId', value: user['shop_id'].toString());
           if (user['shop_name'] != null) await _storage.write(key: 'shopName', value: user['shop_name']);
           if (user['shop_logo'] != null) await _storage.write(key: 'shopLogo', value: user['shop_logo']);
@@ -75,6 +77,8 @@ class AuthService {
         if (user != null) {
           if (user['role'] != null) await _storage.write(key: 'role', value: user['role']);
           if (user['nama'] != null) await _storage.write(key: 'userName', value: user['nama']);
+          if (user['email'] != null) await _storage.write(key: 'userEmail', value: user['email']);
+          if (user['id'] != null) await _storage.write(key: 'userId', value: user['id'].toString());
           if (user['shop_id'] != null) await _storage.write(key: 'shopId', value: user['shop_id'].toString());
           if (user['shop_name'] != null) await _storage.write(key: 'shopName', value: user['shop_name']);
           if (user['shop_logo'] != null) await _storage.write(key: 'shopLogo', value: user['shop_logo']);
@@ -109,6 +113,8 @@ class AuthService {
     required String token,
     required String role,
     String? name,
+    String? email,
+    String? userId,
     String? shopId,
     String? shopName,
     String? shopLogo,
@@ -123,6 +129,8 @@ class AuthService {
     await _storage.write(key: 'role', value: role);
     
     if (name != null) await _storage.write(key: 'userName', value: name);
+    if (email != null) await _storage.write(key: 'userEmail', value: email);
+    if (userId != null) await _storage.write(key: 'userId', value: userId);
     if (shopId != null) await _storage.write(key: 'shopId', value: shopId);
     if (shopName != null) await _storage.write(key: 'shopName', value: shopName);
     if (shopLogo != null) await _storage.write(key: 'shopLogo', value: shopLogo);
@@ -136,6 +144,14 @@ class AuthService {
   // GET CURRENT USER NAME
   Future<String?> getUserName() async {
     return await _storage.read(key: 'userName');
+  }
+
+  Future<String?> getUserEmail() async {
+    return await _storage.read(key: 'userEmail');
+  }
+
+  Future<String?> getUserId() async {
+    return await _storage.read(key: 'userId');
   }
 
   Future<String?> getShopId() async {

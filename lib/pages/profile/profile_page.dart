@@ -57,12 +57,41 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
+    _loadCachedProfile();
     _fetchProfile();
   }
 
+  Future<void> _loadCachedProfile() async {
+    final name = await _authService.getUserName();
+    final email = await _authService.getUserEmail(); // New method
+    final role = await _authService.getRole();
+    final shopId = await _authService.getShopId();
+    final userId = await _authService.getUserId(); // New method
+    final logo = await _authService.getShopLogo();
+
+    if (name != null && mounted) {
+      setState(() {
+        _user = UserModel(
+          id: userId != null ? int.tryParse(userId) ?? 0 : 0,
+          nama: name,
+          email: email ?? "", // Might be null for legacy sessions
+          role: role,
+          shopId: shopId != null ? int.tryParse(shopId) : null,
+        );
+        _shopLogo = logo;
+        _isLoading = false; // Show cached content immediately
+      });
+    }
+  }
+
   void _fetchProfile() async {
-    setState(() => _isLoading = true);
+    // Only show loading if we have no data yet
+    if (_user == null) {
+      setState(() => _isLoading = true);
+    }
+    
     final data = await _authService.getProfile();
+    
     if (data != null && data['error'] == null) {
       if (mounted) {
         setState(() {
@@ -70,19 +99,23 @@ class _ProfilePageState extends State<ProfilePage> {
           if (data['Shop'] != null && data['Shop']['logo'] != null) {
              _shopLogo = data['Shop']['logo'];
           }
+          // Also update cache if API call succeeds
+          if (_user != null) {
+             // We could update cache here but AuthService typically updates only on login
+             // Ideally we should update cache here too for next time
+          }
           _isLoading = false;
         });
       }
     } else {
       if (mounted) {
-        // Fallback dummy data if API fails (for testing UI)
-        setState(() {
-          // _user = UserModel(id: 1, nama: "Demo User", email: "demo@usahaku.com", role: "owner", shopId: 1); // Uncomment to test without API
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(content: Text(data?['error'] ?? 'Gagal memuat profil')),
-        );
+        setState(() => _isLoading = false);
+        // Only show error if we also failed to load cache
+        if (_user == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(data?['error'] ?? 'Gagal memuat profil')),
+            );
+        }
       }
     }
   }
