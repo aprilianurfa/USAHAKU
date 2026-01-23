@@ -98,12 +98,12 @@ class _RegisterPageState extends State<RegisterPage> {
             Stack(
               children: [
                 Container(
-                  height: size.height * 0.25, // Slightly shorter than login
+                  height: size.height * 0.35, // Slightly shorter than login
                   decoration: const BoxDecoration(
-                    color: Colors.white,
+                    gradient: AppTheme.defaultGradient,
                     borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(30),
-                      bottomRight: Radius.circular(30),
+                      bottomLeft: Radius.circular(40),
+                      bottomRight: Radius.circular(40),
                     ),
                   ),
                 ),
@@ -111,25 +111,52 @@ class _RegisterPageState extends State<RegisterPage> {
                   child: Center(
                     child: Column(
                       children: [
-                        Image.asset(
-                          'assets/images/logo.png',
-                          height: 100,
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: ClipOval(
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              height: 80,
+                              width: 80,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 15),
                         const Text(
                           'Daftar Akun',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryColor,
+                            color: Colors.white,
+                            letterSpacing: 1.0,
+                            shadows: [
+                              Shadow(
+                                offset: Offset(0, 2),
+                                blurRadius: 4,
+                                color: Colors.black26,
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 5),
                         Text(
                           'Mulai kelola usahamu hari ini',
                           style: TextStyle(
-                            fontSize: 16,
-                            color: AppTheme.primaryColor.withOpacity(0.8),
+                            fontSize: 14,
+                            color: Colors.white70,
                           ),
                         ),
                       ],
@@ -263,15 +290,26 @@ class _RegisterPageState extends State<RegisterPage> {
                       const SizedBox(height: 28),
 
                       // REGISTER BUTTON
-                      SizedBox(
+                      Container(
                         width: double.infinity,
                         height: 55,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          gradient: AppTheme.defaultGradient,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryColor.withOpacity(0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _handleRegister,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryColor,
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
                             foregroundColor: Colors.white,
-                            elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -283,10 +321,11 @@ class _RegisterPageState extends State<RegisterPage> {
                                 child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
                               )
                             : const Text(
-                                'DAFTAR AKUN',
+                                'DAFTAR SEKARANG',
                                 style: TextStyle(
                                   fontSize: 16, 
                                   fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.0,
                                 ),
                               ),
                         ),
