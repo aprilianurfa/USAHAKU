@@ -150,6 +150,12 @@ class LocalStorageService {
     }
   }
 
+  Future<void> deleteCategoryFromDisk(String id) async {
+    await init();
+    final box = Hive.box<CategoryHive>(categoryBoxName);
+    await box.delete(id);
+  }
+
   // --- TRANSACTIONS ---
 
   Future<void> saveTransactions(List<TransactionHive> transactions, {bool clear = false}) async {
@@ -172,6 +178,12 @@ class LocalStorageService {
     if (!Hive.isBoxOpen(transactionBoxName)) return [];
     final box = Hive.box<TransactionHive>(transactionBoxName);
     return box.values.toList();
+  }
+
+  Future<void> deleteTransactionFromDisk(String id) async {
+    await init();
+    final box = Hive.box<TransactionHive>(transactionBoxName);
+    await box.delete(id);
   }
 
   // --- PURCHASES ---

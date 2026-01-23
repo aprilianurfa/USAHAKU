@@ -130,6 +130,7 @@ class SyncRepository {
         Response response;
         if (item.entity == 'TRANSACTION' && item.action == 'CREATE') {
           final Map<String, dynamic> txData = Map<String, dynamic>.from(item.data);
+          // ... Existing ID swapping logic for items ...
           final List<dynamic> itemsList = List<dynamic>.from(txData['items'] ?? []);
           for (var i = 0; i < itemsList.length; i++) {
             final String bId = itemsList[i]['barangId']?.toString() ?? "";
@@ -140,9 +141,53 @@ class SyncRepository {
           }
           txData['items'] = itemsList;
           response = await _dio.post('/transactions', data: txData);
+
+          // HANDLE RESPONSE (ID SWAP)
+          if (response.statusCode == 200 || response.statusCode == 201) {
+             final t = response.data['transaction'] ?? response.data; // Check structure
+             if (t != null && t['id'] != null) {
+                final newTx = TransactionHive(
+                  id: t['id'].toString(),
+                  tanggal: DateTime.parse(t['tanggal']),
+                  namaPelanggan: t['nama_pelanggan'] ?? "Umum",
+                  totalBayar: t['total_bayar'] ?? 0,
+                  bayar: t['bayar'] ?? 0,
+                  kembalian: t['kembalian'] ?? 0,
+                  items: (t['TransactionItems'] as List? ?? []).map((i) => TransactionItemHive(
+                    productId: i['product_id']?.toString() ?? "",
+                    namaBarang: i['nama_barang'] ?? "Barang",
+                    harga: i['harga'] ?? 0,
+                    qty: i['qty'] ?? 0,
+                    subtotal: i['subtotal'] ?? 0,
+                  )).toList(),
+                  isSynced: true,
+                );
+                await _localService.saveTransaction(newTx);
+                if (item.data['id']?.toString().startsWith('LOC-') ?? false) {
+                   await _localService.deleteTransactionFromDisk(item.data['id']);
+                }
+             }
+          }
+
         } else if (item.entity == 'CATEGORY') {
           if (item.action == 'CREATE') {
             response = await _dio.post('/products/categories', data: item.data);
+            
+            // HANDLE RESPONSE (ID SWAP)
+            if (response.statusCode == 200 || response.statusCode == 201) {
+               final c = response.data;
+               if (c != null && c['id'] != null) {
+                  final newCat = CategoryHive(
+                    id: c['id'].toString(),
+                    nama: c['nama'],
+                    isDeleted: c['is_deleted'] ?? false,
+                  );
+                  await _localService.saveCategory(newCat);
+                  if (item.data['id']?.toString().startsWith('LOC-') ?? false) {
+                     await _localService.deleteCategoryFromDisk(item.data['id']);
+                  }
+               }
+            }
           } else if (item.action == 'UPDATE') {
             response = await _dio.put('/products/categories/${item.data['id']}', data: item.data);
           } else if (item.action == 'DELETE') {
