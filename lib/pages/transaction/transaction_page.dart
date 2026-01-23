@@ -351,6 +351,7 @@ class _TransactionPageState extends State<TransactionPage> {
         action: 'CREATE',
         entity: 'TRANSACTION',
         data: {
+          'id': transactionHive.id, // CRITICAL: Include ID for duplicate cleanup
           'tanggal': transactionHive.tanggal.toIso8601String(),
           'nama_pelanggan': transactionHive.namaPelanggan,
           'total_bayar': transactionHive.totalBayar,
