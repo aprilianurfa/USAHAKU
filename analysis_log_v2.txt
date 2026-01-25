@@ -1,0 +1,30 @@
+Analyzing 4 items...                                            
+
+warning - Unused import: '../../models/category_model.dart' - lib\pages\transaction\transaction_page.dart:9:8 - unused_import
+warning - The value of the local variable 'profile' isn't used - lib\pages\transaction\transaction_page.dart:68:13 - unused_local_variable
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:240:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:401:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:535:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:572:141 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:606:41 - deprecated_member_use
+   info - Unnecessary use of multiple underscores - lib\pages\transaction\transaction_page.dart:698:46 - unnecessary_underscores
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:753:75 - deprecated_member_use
+warning - The value of the field '_currentPage' isn't used - lib\providers\product_provider.dart:23:7 - unused_field
+warning - The value of the field '_limit' isn't used - lib\providers\product_provider.dart:24:20 - unused_field
+  error - Undefined class 'Uint8List' - lib\providers\product_provider.dart:190:55 - undefined_class
+  error - Undefined class 'Uint8List' - lib\providers\product_provider.dart:259:5 - undefined_class
+   info - Don't invoke 'print' in production code - lib\services\product_service.dart:97:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\product_service.dart:112:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\product_service.dart:115:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\product_service.dart:124:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\product_service.dart:127:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\product_service.dart:129:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\product_service.dart:136:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\product_service.dart:137:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\product_service.dart:143:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\product_service.dart:159:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\product_service.dart:171:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\product_service.dart:173:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\product_service.dart:176:8 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\product_service.dart:177:8 - avoid_print
+

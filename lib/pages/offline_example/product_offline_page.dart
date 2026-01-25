@@ -47,10 +47,7 @@ class _ProductOfflinePageState extends State<ProductOfflinePage> {
         title: const Text("Manajemen Barang (Optimized)", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         flexibleSpace: Container(decoration: const BoxDecoration(gradient: AppTheme.defaultGradient)),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.sync_rounded, color: Colors.white),
-            onPressed: () => productProvider.loadProducts(),
-          ),
+
         ],
       ),
       body: Column(

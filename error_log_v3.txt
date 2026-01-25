@@ -1,0 +1,7 @@
+Analyzing category_page.dart...                                 
+
+  error - Expected to find ')' - lib\pages\product\category_page.dart:218:6 - expected_token
+   info - Don't use 'BuildContext's across async gaps - lib\pages\product\category_page.dart:285:58 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\pages\product\category_page.dart:299:43 - use_build_context_synchronously
+
+3 issues found. (ran in 1.5s)

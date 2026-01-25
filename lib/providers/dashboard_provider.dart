@@ -3,7 +3,6 @@ import '../services/transaction_service.dart';
 import '../services/shift_service.dart';
 import '../services/auth_service.dart';
 import '../services/product_service.dart';
-import '../services/local_storage_service.dart';
 import '../repositories/sync_repository.dart';
 import '../models/sales_report_model.dart';
 
@@ -92,14 +91,17 @@ class DashboardProvider with ChangeNotifier {
       // Refresh Shift Status
       _currentShift = await _shiftService.getCurrentShift();
       
-      DateTime? startTime;
-      if (_currentShift != null) {
-        final startTimeStr = _currentShift!['startTime'] ?? _currentShift!['start_time'];
-        startTime = startTimeStr != null ? DateTime.tryParse(startTimeStr) : null;
-      }
+      
+      // Fix: Dashboard should always show TODAY's sales, not just current shift sales.
+      // This ensures it matches "Laporan Penjualan" which defaults to today.
+      final now = DateTime.now();
+      final startTime = DateTime(now.year, now.month, now.day); 
+      // Ignored: Shift Start Time logic removed to align with Report
+      // if (_currentShift != null) { ... }
 
       // Fetch Summary (Sales, Trx Count, Profit)
-      _summary = await _transactionService.getDashboardSummary(startTime: startTime);
+      final rawSummary = await _transactionService.getDashboardSummary(startTime: startTime);
+      _summary = rawSummary;
 
       // Low Stock Alert
       final lowStockProducts = await _productService.getLowStockProducts();

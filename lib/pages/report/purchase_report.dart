@@ -3,8 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme.dart';
 import '../../providers/purchase_provider.dart';
-import '../../models/purchase_hive.dart';
-import '../../widgets/app_drawer.dart';
+import 'package:usahaku_main/core/app_shell.dart';
 
 class PurchaseReportPage extends StatefulWidget {
   const PurchaseReportPage({super.key});
@@ -56,8 +55,11 @@ class _PurchaseReportPageState extends State<PurchaseReportPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => AppShell.of(context).toggleSidebar(),
+        ),
         title: const Text("Laporan Pembelian", style: TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
         backgroundColor: Colors.transparent,

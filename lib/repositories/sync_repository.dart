@@ -5,10 +5,8 @@ import '../models/product_hive.dart';
 import '../models/category_hive.dart';
 import '../models/transaction_hive.dart';
 import '../models/purchase_hive.dart';
-import '../models/sync_queue.dart';
 import '../services/local_storage_service.dart';
 import '../services/auth_service.dart';
-import '../config/constants.dart';
 import '../core/api_client.dart';
 
 class SyncRepository {
@@ -254,6 +252,15 @@ class SyncRepository {
       } catch (e) {
         if (e is DioException) {
           print("[SyncRepo] Item ${item.id} failed: ${e.response?.statusCode} ${e.response?.data}");
+          // CRITICAL FIX: If error is "Duplicate ID" or Validation Error (500 or 409), 
+          // we assume it's already synced or conflicted. We remove it to prevent endless loop.
+          final statusCode = e.response?.statusCode;
+          final responseData = e.response?.data?.toString() ?? "";
+          
+          if (statusCode == 409 || (statusCode == 500 && responseData.contains("id must be unique"))) {
+            print("[SyncRepo] Duplicate/Existing Item detected. Removing ${item.id} from queue.");
+            await _localService.removeFromQueue(item.id);
+          }
         } else {
           print("[SyncRepo] Item ${item.id} failed: $e");
         }

@@ -1,0 +1,25 @@
+Analyzing 4 items...                                            
+
+warning - Unused import: '../../services/auth_service.dart' - lib\pages\transaction\transaction_page.dart:13:8 - unused_import
+warning - Unused import: '../../widgets/keyboard_spacer.dart' - lib\pages\transaction\transaction_page.dart:18:8 - unused_import
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:236:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:397:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:496:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:533:141 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:567:41 - deprecated_member_use
+   info - Unnecessary use of multiple underscores - lib\pages\transaction\transaction_page.dart:659:46 - unnecessary_underscores
+  error - Target of URI doesn't exist: '../../providers/product_provider.dart' - lib\pages\transaction\widgets\category_selector.dart:3:8 - uri_does_not_exist
+  error - Target of URI doesn't exist: '../../core/theme.dart' - lib\pages\transaction\widgets\category_selector.dart:4:8 - uri_does_not_exist
+  error - The name 'ProductProvider' isn't a type, so it can't be used as a type argument - lib\pages\transaction\widgets\category_selector.dart:14:23 - non_type_as_type_argument
+  error - The property 'selectedCategoryId' can't be unconditionally accessed because the receiver can be 'null' - lib\pages\transaction\widgets\category_selector.dart:20:75 - unchecked_use_of_nullable_value
+  error - The property 'categories' can't be unconditionally accessed because the receiver can be 'null' - lib\pages\transaction\widgets\category_selector.dart:21:34 - unchecked_use_of_nullable_value
+  error - The property 'selectedCategoryId' can't be unconditionally accessed because the receiver can be 'null' - lib\pages\transaction\widgets\category_selector.dart:22:75 - unchecked_use_of_nullable_value
+  error - The name 'ProductProvider' isn't a type, so it can't be used as a type argument - lib\pages\transaction\widgets\category_selector.dart:35:22 - non_type_as_type_argument
+  error - Undefined name 'AppTheme' - lib\pages\transaction\widgets\category_selector.dart:41:31 - undefined_identifier
+  error - Undefined name 'AppTheme' - lib\pages\transaction\widgets\category_selector.dart:43:50 - undefined_identifier
+  error - Undefined name 'AppTheme' - lib\pages\transaction\widgets\category_selector.dart:44:53 - undefined_identifier
+  error - Target of URI doesn't exist: '../../providers/product_provider.dart' - lib\pages\transaction\widgets\transaction_search_bar.dart:3:8 - uri_does_not_exist
+  error - The name 'ProductProvider' isn't a type, so it can't be used as a type argument - lib\pages\transaction\widgets\transaction_search_bar.dart:19:32 - non_type_as_type_argument
+  error - The name 'ProductProvider' isn't a type, so it can't be used as a type argument - lib\pages\transaction\widgets\transaction_search_bar.dart:36:24 - non_type_as_type_argument
+  error - The name 'ProductProvider' isn't a type, so it can't be used as a type argument - lib\pages\transaction\widgets\transaction_search_bar.dart:51:34 - non_type_as_type_argument
+

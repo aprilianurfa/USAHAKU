@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme.dart';
-import '../../widgets/app_drawer.dart';
+import 'package:usahaku_main/core/app_shell.dart';
 
 class ExpenseReportPage extends StatelessWidget {
   const ExpenseReportPage({super.key});
@@ -47,11 +47,14 @@ class ExpenseReportPage extends StatelessWidget {
     ];
 
     return Scaffold(
-      drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => AppShell.of(context).toggleSidebar(),
+        ),
         flexibleSpace: Container(decoration: const BoxDecoration(gradient: AppTheme.defaultGradient)),
         title: const Text('Laporan Biaya', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        iconTheme: const IconThemeData(color: Colors.white),
+        foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

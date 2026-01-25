@@ -41,7 +41,7 @@ class ShiftService {
       // Add timestamp to prevent caching
       final response = await _dio.get("/shift/current?_t=${DateTime.now().millisecondsSinceEpoch}");
       return response.data; // Returns null if no shift is open
-    } on DioException catch (e) {
+    } on DioException {
       // If 404/Null - treat as no shift
       return null;
     }

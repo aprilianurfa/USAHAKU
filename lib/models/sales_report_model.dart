@@ -10,7 +10,9 @@ class SalesReport {
     required this.transactions,
   });
 
-  factory SalesReport.fromMap(Map<String, dynamic> map) {
+  factory SalesReport.fromMap(dynamic data) {
+    if (data is! Map) return SalesReport(totalSales: 0, transactionCount: 0, transactions: []);
+    final map = Map<String, dynamic>.from(data);
     return SalesReport(
       totalSales: map['totalSales'] ?? 0,
       transactionCount: map['transactionCount'] ?? 0,
@@ -33,7 +35,9 @@ class DashboardSummary {
     required this.profitToday,
   });
 
-  factory DashboardSummary.fromMap(Map<String, dynamic> map) {
+  factory DashboardSummary.fromMap(dynamic data) {
+    if (data is! Map) return DashboardSummary(salesToday: 0, trxCountToday: 0, profitToday: 0);
+    final map = Map<String, dynamic>.from(data);
     return DashboardSummary(
       salesToday: map['salesToday'] ?? 0,
       trxCountToday: map['trxCountToday'] ?? 0,

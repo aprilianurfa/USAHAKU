@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme.dart';
-import '../../core/theme.dart';
-import '../../widgets/app_drawer.dart';
+import 'package:usahaku_main/core/app_shell.dart';
 import '../../services/report_service.dart';
 
 class ShiftReportPage extends StatefulWidget {
-  const ShiftReportPage({Key? key}) : super(key: key);
+  const ShiftReportPage({super.key});
 
   @override
   State<ShiftReportPage> createState() => _ShiftReportPageState();
@@ -128,13 +127,16 @@ class _ShiftReportPageState extends State<ShiftReportPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => AppShell.of(context).toggleSidebar(),
+        ),
         flexibleSpace: Container(decoration: const BoxDecoration(gradient: AppTheme.defaultGradient)),
         title: const Text("Laporan Shift", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         centerTitle: true,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        foregroundColor: Colors.white,
       ),
       body: Column(
         children: [

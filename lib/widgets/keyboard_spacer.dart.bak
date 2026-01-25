@@ -1,0 +1,15 @@
+import 'package:flutter/material.dart';
+
+/// A widget that provides padding for the software keyboard without 
+/// using MediaQuery.viewInsetsOf(context), which can trigger full page rebuilds.
+/// It uses View.of(context).viewInsets.bottom directly for performance.
+class KeyboardSpacer extends StatelessWidget {
+  final double extraPadding;
+  const KeyboardSpacer({super.key, this.extraPadding = 0});
+
+  @override
+  Widget build(BuildContext context) {
+    final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
+    return SizedBox(height: keyboardHeight + extraPadding);
+  }
+}

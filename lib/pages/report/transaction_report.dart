@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../models/transaction_model.dart';
 import '../../models/sales_report_model.dart';
 import '../../services/transaction_service.dart';
 import '../../core/theme.dart';
-import '../../widgets/app_drawer.dart';
+import 'package:usahaku_main/core/app_shell.dart';
 
 class TransactionReportPage extends StatefulWidget {
   const TransactionReportPage({super.key});
@@ -21,11 +20,14 @@ class _TransactionReportPageState extends State<TransactionReportPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => AppShell.of(context).toggleSidebar(),
+        ),
         flexibleSpace: Container(decoration: const BoxDecoration(gradient: AppTheme.defaultGradient)),
         title: const Text('Laporan Penjualan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        iconTheme: const IconThemeData(color: Colors.white),
+        foregroundColor: Colors.white,
       ),
       body: FutureBuilder<SalesReport>(
         future: _transactionService.getSalesReport(),

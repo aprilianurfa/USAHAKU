@@ -1,0 +1,16 @@
+Analyzing 2 items...                                            
+
+warning - Unused import: '../../services/product_service.dart' - lib\pages\product\category_page.dart:6:8 - unused_import
+warning - The value of the field '_formKey' isn't used - lib\pages\product\category_page.dart:18:9 - unused_field
+   info - Don't use 'BuildContext's across async gaps - lib\pages\product\category_page.dart:43:13 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\pages\product\category_page.dart:86:13 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\pages\product\category_page.dart:89:13 - use_build_context_synchronously
+  error - The named parameter 'decoration' isn't defined - lib\pages\product\category_page.dart:148:19 - undefined_named_parameter
+  error - Too many positional arguments: 0 expected, but 1 found - lib\pages\product\category_page.dart:159:11 - extra_positional_arguments_could_be_named
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\product\category_page.dart:188:58 - deprecated_member_use
+  error - Expected to find ')' - lib\pages\product\category_page.dart:214:9 - expected_token
+   info - Don't use 'BuildContext's across async gaps - lib\pages\product\category_page.dart:281:25 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\pages\product\category_page.dart:287:53 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\pages\product\category_page.dart:289:54 - use_build_context_synchronously
+  error - The name 'searchProducts' is already defined - lib\providers\product_provider.dart:179:8 - duplicate_definition
+

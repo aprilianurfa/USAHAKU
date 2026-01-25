@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../core/theme.dart';
-import '../../core/theme.dart';
-import '../../widgets/app_drawer.dart';
+import 'package:usahaku_main/core/app_shell.dart';
+import 'package:usahaku_main/core/view_metrics.dart';
 import 'add_employee_page.dart';
 
 class EmployeeListPage extends StatefulWidget {
-  const EmployeeListPage({Key? key}) : super(key: key);
+  const EmployeeListPage({super.key});
 
   @override
   State<EmployeeListPage> createState() => _EmployeeListPageState();
@@ -15,7 +15,6 @@ class EmployeeListPage extends StatefulWidget {
 class _EmployeeListPageState extends State<EmployeeListPage> {
   final AuthService _authService = AuthService();
   late Future<dynamic> _employeesFuture;
-
 
   @override
   void initState() {
@@ -36,34 +35,17 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
         title: const Text("Hapus Karyawan"),
         content: Text("Yakin ingin menghapus $name?"),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text("Batal"),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text("Hapus"),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Batal")),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), style: TextButton.styleFrom(foregroundColor: Colors.red), child: const Text("Hapus")),
         ],
       ),
     );
 
     if (confirmed == true) {
       final res = await _authService.deleteEmployee(id);
-      if (res != null && res['error'] == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Karyawan berhasil dihapus")),
-          );
-          _loadEmployees();
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(res?['error'] ?? "Gagal menghapus")),
-          );
-        }
+      if (res != null && res['error'] == null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Karyawan berhasil dihapus")));
+        _loadEmployees();
       }
     }
   }
@@ -72,154 +54,125 @@ class _EmployeeListPageState extends State<EmployeeListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
+      resizeToAvoidBottomInset: false, // MANDATORY
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => AppShell.of(context).toggleSidebar(),
+        ),
         title: const Text("Daftar Karyawan", style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: AppTheme.defaultGradient,
-          ),
-        ),
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: AppTheme.defaultGradient)),
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      drawer: const AppDrawer(),
       body: FutureBuilder<dynamic>(
         future: _employeesFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
-          }
+          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+          if (snapshot.hasError) return Center(child: Text("Error: ${snapshot.error}"));
 
           final data = snapshot.data;
-          
-          if (data is Map && data.containsKey('error')) {
-             return Center(child: Text(data['error']));
-          }
+          if (data is Map && data.containsKey('error')) return Center(child: Text(data['error']));
+          if (data is! List) return const Center(child: Text("Data tidak valid"));
 
-          if (data is! List) {
-            return const Center(child: Text("Data tidak valid"));
-          }
-
-          final List employees = data;
-
-          if (employees.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.people_outline, size: 80, color: Colors.grey.shade300),
-                  const SizedBox(height: 16),
-                  const Text("Belum ada karyawan", style: TextStyle(color: Colors.grey)),
-                ],
-              ),
-            );
-          }
+          if (data.isEmpty) return const _EmptyEmployeePlaceholder();
 
           return RefreshIndicator(
             onRefresh: () async => _loadEmployees(),
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 80), // Add bottom padding for FAB
-              itemCount: employees.length,
-              separatorBuilder: (ctx, i) => const SizedBox(height: 12),
-              itemBuilder: (ctx, i) {
-                final emp = employees[i];
-                final String name = emp['nama'] ?? 'Tanpa Nama';
-                final String role = emp['role'] ?? 'Staff';
-                final int id = emp['id'];
-
-                return Card(
-                  elevation: 0,
-                  margin: EdgeInsets.zero, // Controlled by ListView separator
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    leading: CircleAvatar(
-                      radius: 24,
-                      backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-                      child: Text(
-                        name.isNotEmpty ? name[0].toUpperCase() : '?',
-                        style: const TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold, fontSize: 18),
-                      ),
-                    ),
-                    title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.orange.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            role.toUpperCase(),
-                            style: const TextStyle(fontSize: 10, color: Colors.orange, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-                      onPressed: () => _deleteEmployee(id, name),
-                    ),
-                  ),
-                );
-              },
+            child: RepaintBoundary(
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 80),
+                itemCount: data.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (ctx, i) => _EmployeeCard(
+                  employee: data[i],
+                  onDelete: () => _deleteEmployee(data[i]['id'], data[i]['nama'] ?? 'Tanpa Nama'),
+                ),
+              ),
             ),
           );
         },
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: SizedBox(
-          width: double.infinity,
-          height: 55,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: AppTheme.defaultGradient,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(color: AppTheme.primaryColor.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))
-                ]
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(16),
-                  onTap: () async {
-                    final refresh = await Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const AddEmployeePage()),
-                    );
-                    if (refresh == true) {
-                      _loadEmployees();
-                    }
-                  },
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.person_add_rounded, color: Colors.white),
-                      SizedBox(width: 10),
-                      Text(
-                        "TAMBAH KARYAWAN BARU",
-                        style: TextStyle(
-                          color: Colors.white, 
-                          fontWeight: FontWeight.bold, 
-                          letterSpacing: 1.2
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+      floatingActionButton: _AddEmployeeFAB(onAdded: _loadEmployees),
+    );
+  }
+}
+
+class _EmptyEmployeePlaceholder extends StatelessWidget {
+  const _EmptyEmployeePlaceholder();
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Icon(Icons.people_outline, size: 80, color: Colors.grey.shade300),
+        const SizedBox(height: 16),
+        const Text("Belum ada karyawan", style: TextStyle(color: Colors.grey)),
+      ]),
+    );
+  }
+}
+
+class _EmployeeCard extends StatelessWidget {
+  final dynamic employee;
+  final VoidCallback onDelete;
+  const _EmployeeCard({required this.employee, required this.onDelete});
+
+  @override
+  Widget build(BuildContext context) {
+    final String name = employee['nama'] ?? 'Tanpa Nama';
+    final String role = employee['role'] ?? 'Staff';
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        leading: CircleAvatar(
+          radius: 24, backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+          child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?', style: const TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold, fontSize: 18)),
+        ),
+        title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const SizedBox(height: 4),
+          Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+            child: Text(role.toUpperCase(), style: const TextStyle(fontSize: 10, color: Colors.orange, fontWeight: FontWeight.bold)),
+          ),
+        ]),
+        trailing: IconButton(icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent), onPressed: onDelete),
+      ),
+    );
+  }
+}
+
+class _AddEmployeeFAB extends StatelessWidget {
+  final VoidCallback onAdded;
+  const _AddEmployeeFAB({required this.onAdded});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: SizedBox(
+        width: double.infinity, height: 55,
+        child: Container(
+          decoration: BoxDecoration(gradient: AppTheme.defaultGradient, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: AppTheme.primaryColor.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))]),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () async {
+                final refresh = await Navigator.push(context, MaterialPageRoute(builder: (_) => const AddEmployeePage()));
+                if (refresh == true) onAdded();
+              },
+              child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Icon(Icons.person_add_rounded, color: Colors.white),
+                SizedBox(width: 10),
+                Text("TAMBAH KARYAWAN BARU", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+              ]),
             ),
+          ),
         ),
       ),
     );

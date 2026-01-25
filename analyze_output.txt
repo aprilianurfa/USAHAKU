@@ -1,0 +1,24 @@
+Analyzing 2 items...                                            
+
+warning - The declaration '_formatCurrency' isn't referenced - lib\pages\transaction\checkout_sheet.dart:55:10 - unused_element
+   info - Unnecessary constructor invocation - lib\pages\transaction\checkout_sheet.dart:227:25 - prefer_collection_literals
+warning - The value of the field '_bluetooth' isn't used - lib\pages\transaction\printer_page.dart:17:28 - unused_field
+warning - Dead code - lib\pages\transaction\printer_page.dart:35:34 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\pages\transaction\printer_page.dart:35:37 - dead_null_aware_expression
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\printer_page.dart:88:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\printer_page.dart:88:76 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\printer_page.dart:185:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\receipt_settings_page.dart:172:41 - deprecated_member_use
+   info - Don't invoke 'print' in production code - lib\pages\transaction\transaction_history_page.dart:59:7 - avoid_print
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_history_page.dart:230:50 - deprecated_member_use
+warning - Dead code - lib\pages\transaction\transaction_history_page.dart:235:27 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\pages\transaction\transaction_history_page.dart:235:30 - dead_null_aware_expression
+warning - The left operand can't be null, so the right operand is never executed - lib\pages\transaction\transaction_history_page.dart:241:53 - dead_null_aware_expression
+warning - Unused import: '../../models/product_model.dart' - lib\pages\transaction\transaction_page.dart:8:8 - unused_import
+  error - The method 'CachedNetworkImage' isn't defined for the type '_ProductCard' - lib\pages\transaction\transaction_page.dart:336:23 - undefined_method
+   info - Unnecessary use of multiple underscores - lib\pages\transaction\transaction_page.dart:339:42 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\pages\transaction\transaction_page.dart:340:42 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\pages\transaction\transaction_page.dart:340:46 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\pages\transaction\transaction_page.dart:522:41 - unnecessary_underscores
+
+20 issues found. (ran in 2.4s)

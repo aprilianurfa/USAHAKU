@@ -1,0 +1,8 @@
+Analyzing 3 items...                                            
+
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:234:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:513:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:550:141 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:584:41 - deprecated_member_use
+   info - Unnecessary use of multiple underscores - lib\pages\transaction\transaction_page.dart:676:46 - unnecessary_underscores
+

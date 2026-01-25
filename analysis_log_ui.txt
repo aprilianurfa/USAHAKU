@@ -1,0 +1,73 @@
+Analyzing 2 items...                                            
+
+   info - The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\pages\dashboard\dashboard_page.dart:3:8 - unnecessary_import
+warning - Unused import: '../../providers/product_provider.dart' - lib\pages\dashboard\dashboard_page.dart:9:8 - unused_import
+   info - Parameter 'key' could be a super parameter - lib\pages\dashboard\dashboard_page.dart:14:9 - use_super_parameters
+warning - The declaration '_formatRupiahShort' isn't referenced - lib\pages\dashboard\dashboard_page.dart:42:10 - unused_element
+   info - Use interpolation to compose strings and values - lib\pages\dashboard\dashboard_page.dart:43:13 - prefer_interpolation_to_compose_strings
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard\dashboard_page.dart:92:75 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard\dashboard_page.dart:137:67 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\pages\dashboard\dashboard_page.dart:240:7 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\pages\dashboard\dashboard_page.dart:250:7 - use_build_context_synchronously
+warning - The value of the local variable 'stokMenipis' isn't used - lib\pages\dashboard\dashboard_page.dart:262:15 - unused_local_variable
+  error - The method '_buildLoadingSkeleton' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:267:17 - undefined_method
+  error - The method '_buildHeaderSectionTop' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:283:36 - undefined_method
+  error - The method '_buildSummaryCard' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:288:36 - undefined_method
+  error - The method '_buildSectionContainer' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:336:27 - undefined_method
+  error - The method '_menuItemModern' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:340:31 - undefined_method
+  error - The method '_menuItemModern' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:341:31 - undefined_method
+  error - The method '_menuItemModern' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:342:31 - undefined_method
+  error - The method '_buildSectionContainer' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:349:25 - undefined_method
+  error - The method '_menuItemModern' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:353:29 - undefined_method
+  error - The method '_menuItemModern' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:366:29 - undefined_method
+  error - The method '_menuItemModern' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:367:29 - undefined_method
+  error - The method '_buildSectionContainer' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:375:27 - undefined_method
+  error - The method '_menuItemModern' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:380:31 - undefined_method
+  error - The method '_menuItemModern' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:381:31 - undefined_method
+  error - The method '_menuItemModern' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:382:31 - undefined_method
+  error - The method '_menuItemModern' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:383:31 - undefined_method
+  error - The method '_menuItemModern' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:384:31 - undefined_method
+  error - The method '_menuItemModern' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:385:31 - undefined_method
+  error - Expected to find ',' - lib\pages\dashboard\dashboard_page.dart:398:3 - expected_token
+  error - Function expressions can't be named - lib\pages\dashboard\dashboard_page.dart:398:10 - named_function_expression
+  error - Too many positional arguments: 0 expected, but 7 found - lib\pages\dashboard\dashboard_page.dart:398:32 - extra_positional_arguments_could_be_named
+  error - Expected to find ',' - lib\pages\dashboard\dashboard_page.dart:505:3 - expected_token
+  error - Function expressions can't be named - lib\pages\dashboard\dashboard_page.dart:505:10 - named_function_expression
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard\dashboard_page.dart:513:29 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard\dashboard_page.dart:515:48 - deprecated_member_use
+  error - The method '_buildSummaryText' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:521:22 - undefined_method
+  error - The method '_buildSummaryText' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:533:22 - undefined_method
+  error - The method '_buildSummaryText' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:546:22 - undefined_method
+  error - Expected to find ',' - lib\pages\dashboard\dashboard_page.dart:562:3 - expected_token
+  error - Function expressions can't be named - lib\pages\dashboard\dashboard_page.dart:562:10 - named_function_expression
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard\dashboard_page.dart:571:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard\dashboard_page.dart:573:64 - deprecated_member_use
+  error - Expected to find ',' - lib\pages\dashboard\dashboard_page.dart:600:3 - expected_token
+  error - Function expressions can't be named - lib\pages\dashboard\dashboard_page.dart:600:10 - named_function_expression
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard\dashboard_page.dart:612:33 - deprecated_member_use
+  error - Expected to find ',' - lib\pages\dashboard\dashboard_page.dart:644:3 - expected_token
+  error - Function expressions can't be named - lib\pages\dashboard\dashboard_page.dart:644:10 - named_function_expression
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard\dashboard_page.dart:656:30 - deprecated_member_use
+  error - Expected to find ',' - lib\pages\dashboard\dashboard_page.dart:675:3 - expected_token
+  error - Function expressions can't be named - lib\pages\dashboard\dashboard_page.dart:675:10 - named_function_expression
+  error - The method '_skeletonBox' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:697:21 - undefined_method
+  error - The method '_skeletonBox' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:702:25 - undefined_method
+  error - The method '_skeletonBox' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:704:25 - undefined_method
+  error - The method '_skeletonBox' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:713:24 - undefined_method
+  error - The method '_skeletonBox' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:720:21 - undefined_method
+  error - The method '_skeletonBox' isn't defined for the type '_DashboardPageState' - lib\pages\dashboard\dashboard_page.dart:722:21 - undefined_method
+  error - Expected to find ',' - lib\pages\dashboard\dashboard_page.dart:746:3 - expected_token
+  error - Function expressions can't be named - lib\pages\dashboard\dashboard_page.dart:746:10 - named_function_expression
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\dashboard\dashboard_page.dart:758:35 - deprecated_member_use
+  error - Expected to find ';' - lib\pages\dashboard\dashboard_page.dart:765:3 - expected_token
+  error - Expected to find ')' - lib\pages\dashboard\dashboard_page.dart:766:1 - expected_token
+  error - Expected to find '}' - lib\pages\dashboard\dashboard_page.dart:767:1 - expected_token
+warning - Unused import: '../../services/auth_service.dart' - lib\pages\transaction\transaction_page.dart:13:8 - unused_import
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:237:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:398:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:536:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:573:141 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:607:41 - deprecated_member_use
+   info - Unnecessary use of multiple underscores - lib\pages\transaction\transaction_page.dart:699:46 - unnecessary_underscores
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\pages\transaction\transaction_page.dart:754:75 - deprecated_member_use
+

@@ -1,0 +1,14 @@
+Analyzing category_page.dart...                                 
+
+  error - Expected to find ';' - lib\pages\product\category_page.dart:213:15 - expected_token
+warning - Dead code - lib\pages\product\category_page.dart:213:16 - dead_code
+  error - Expected an identifier - lib\pages\product\category_page.dart:213:16 - missing_identifier
+  error - Expected to find ';' - lib\pages\product\category_page.dart:213:16 - expected_token
+  error - Unexpected text ';' - lib\pages\product\category_page.dart:213:16 - unexpected_token
+  error - Expected an identifier - lib\pages\product\category_page.dart:214:13 - missing_identifier
+  error - Unexpected text ';' - lib\pages\product\category_page.dart:214:13 - unexpected_token
+   info - Unnecessary empty statement - lib\pages\product\category_page.dart:214:14 - empty_statements
+   info - Don't use 'BuildContext's across async gaps - lib\pages\product\category_page.dart:286:58 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\pages\product\category_page.dart:300:43 - use_build_context_synchronously
+
+10 issues found. (ran in 1.9s)

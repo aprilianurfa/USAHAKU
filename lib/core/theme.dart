@@ -23,12 +23,11 @@ class AppTheme {
       surface: Colors.white,
     ),
 
-    // Disable all splash and interactive shadows globally
-    splashFactory: NoSplash.splashFactory,
-    splashColor: Colors.transparent,
-    highlightColor: Colors.transparent,
-    hoverColor: Colors.transparent,
+    // Performance: Standardize layout density
+    visualDensity: VisualDensity.standard,
 
+    // Enable standard splash effects for visual feedback
+    splashFactory: InkSplash.splashFactory,
 
     appBarTheme: const AppBarTheme(
       backgroundColor: primaryColor,
@@ -52,6 +51,8 @@ class AppTheme {
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: Colors.white,
+      // Performance: Simplify borders for faster rendering during animation
+      isDense: true, 
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: Colors.grey.shade300),
@@ -62,6 +63,8 @@ class AppTheme {
       ),
       prefixIconColor: primaryColor,
       labelStyle: const TextStyle(color: Colors.black54),
+      // Prevent unnecessary layout shifts
+      floatingLabelBehavior: FloatingLabelBehavior.auto,
     ),
 
     cardTheme: const CardThemeData(
@@ -81,24 +84,9 @@ class AppTheme {
 
     pageTransitionsTheme: const PageTransitionsTheme(
       builders: {
-        TargetPlatform.android: NoTransitionsBuilder(),
-        TargetPlatform.iOS: NoTransitionsBuilder(),
+        TargetPlatform.android: ZoomPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
       },
     ),
   );
-}
-
-class NoTransitionsBuilder extends PageTransitionsBuilder {
-  const NoTransitionsBuilder();
-
-  @override
-  Widget buildTransitions<T>(
-    PageRoute<T> route,
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-    Widget child,
-  ) {
-    return child;
-  }
 }

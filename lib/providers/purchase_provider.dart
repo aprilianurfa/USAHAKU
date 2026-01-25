@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/purchase_hive.dart';
-import '../models/purchase_model.dart';
 import '../models/sync_queue.dart';
 import '../services/local_storage_service.dart';
 import '../repositories/sync_repository.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:hive/hive.dart';
 
 class PurchaseProvider with ChangeNotifier {
   final LocalStorageService _localService = LocalStorageService();

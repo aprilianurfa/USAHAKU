@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+
 import '../../core/theme.dart';
 import '../../models/product_model.dart';
-import '../../models/purchase_model.dart';
 import '../../models/purchase_item_model.dart';
 import '../../services/product_service.dart';
-import '../../services/purchase_service.dart';
-import '../../widgets/app_drawer.dart';
+import 'package:usahaku_main/core/app_shell.dart';
+import 'package:usahaku_main/core/view_metrics.dart';
 import '../../providers/purchase_provider.dart';
 import '../../models/purchase_hive.dart';
-import 'package:provider/provider.dart';
 
 class PurchasePage extends StatefulWidget {
   const PurchasePage({super.key});
@@ -20,9 +20,6 @@ class PurchasePage extends StatefulWidget {
 
 class _PurchasePageState extends State<PurchasePage> {
   final ProductService _productService = ProductService();
-  final PurchaseService _purchaseService = PurchaseService();
-  final currencyFormatter = NumberFormat.currency(locale: 'id', symbol: 'Rp ', decimalDigits: 0);
-
   final TextEditingController _supplierController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
 
@@ -36,20 +33,23 @@ class _PurchasePageState extends State<PurchasePage> {
     _loadProducts();
   }
 
+  @override
+  void dispose() {
+    _supplierController.dispose();
+    _notesController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadProducts() async {
     try {
       final products = await _productService.getProducts();
-      setState(() {
-        _availableProducts = products;
-      });
+      if (mounted) setState(() => _availableProducts = products);
     } catch (e) {
-      print('Error loading products: $e');
+      debugPrint('Error loading products: $e');
     }
   }
 
-  int get _totalBiaya {
-    return _cart.fold(0, (sum, item) => sum + (item.jumlah * item.hargaBeli));
-  }
+  int get _totalBiaya => _cart.fold(0, (sum, item) => sum + (item.jumlah * item.hargaBeli));
 
   void _addProductToCart(Barang product) {
     setState(() {
@@ -74,9 +74,7 @@ class _PurchasePageState extends State<PurchasePage> {
 
   Future<void> _savePurchase() async {
     if (_cart.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pilih barang terlebih dahulu')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pilih barang terlebih dahulu')));
       return;
     }
 
@@ -99,17 +97,11 @@ class _PurchasePageState extends State<PurchasePage> {
       await context.read<PurchaseProvider>().saveLocalPurchase(purchaseHive);
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pembelian berhasil disimpan secara lokal dan akan disinkronkan.')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pembelian berhasil disimpan')));
         Navigator.pop(context, true);
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal: $e'), backgroundColor: Colors.red),
-        );
-      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: $e'), backgroundColor: Colors.red));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -119,139 +111,214 @@ class _PurchasePageState extends State<PurchasePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      drawer: const AppDrawer(),
+      resizeToAvoidBottomInset: false, // MANDATORY
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => AppShell.of(context).toggleSidebar(),
+        ),
         title: const Text("Input Pembelian Barang", style: TextStyle(fontWeight: FontWeight.bold)),
         elevation: 0,
         backgroundColor: Colors.transparent,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: AppTheme.defaultGradient,
-          ),
-        ),
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: AppTheme.defaultGradient)),
         foregroundColor: Colors.white,
       ),
       body: Column(
         children: [
-          // Stack for Header Extension and Floating Card
-          Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.topCenter,
-            children: [
-              // Blue background extension
-              Container(
-                width: double.infinity,
-                height: 50, 
-                decoration: const BoxDecoration(
-                  gradient: AppTheme.defaultGradient,
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30),
-                  ),
-                ),
-              ),
-              // Floating Card
-              Padding(
-                padding: const EdgeInsets.only(top: 10), // Small gap from top
-                child: _buildTotalSummary(),
-              ),
-            ],
-          ),
-          
+          _PurchaseSummaryHeader(itemCount: _cart.length, total: _totalBiaya),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
-                const SizedBox(height: 10), // Space after card (card height is included in flow but needs visual spacing)
-                _buildForm(),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text("Daftar Barang", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    TextButton.icon(
-                      onPressed: _showProductPicker,
-                      icon: const Icon(Icons.add_circle_outline),
-                      label: const Text("Pilih Barang"),
-                      style: TextButton.styleFrom(foregroundColor: AppTheme.primaryColor),
-                    ),
-                  ],
-                ),
                 const SizedBox(height: 10),
-                if (_cart.isEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(30),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Column(
-                      children: [
-                        Icon(Icons.shopping_basket_outlined, size: 50, color: Colors.grey.shade400),
-                        const SizedBox(height: 10),
-                        Text("Belum ada barang dipilih", style: TextStyle(color: Colors.grey.shade600)),
-                      ],
-                    ),
-                  )
-                else
-                  ..._cart.asMap().entries.map((entry) => _buildCartItem(entry.key, entry.value)),
-                const SizedBox(height: 100), // Space for FAB
+                _PurchaseFormSection(supplierCtrl: _supplierController, notesCtrl: _notesController),
+                const SizedBox(height: 20),
+                _CartHeader(onAddPressed: _showProductPicker),
+                const SizedBox(height: 10),
+                if (_cart.isEmpty) const _EmptyCartPlaceholder()
+                else RepaintBoundary(
+                  child: Column(
+                    children: _cart.asMap().entries.map((e) => _PurchaseItemRow(
+                      key: ValueKey(e.value.productId),
+                      item: e.value,
+                      onDelete: () => setState(() => _cart.removeAt(e.key)),
+                      onUpdate: (newItem) => setState(() => _cart[e.key] = newItem),
+                    )).toList(),
+                  ),
+                ),
+                const SizedBox(height: 100),
               ],
             ),
           ),
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: SizedBox(
-          width: double.infinity,
-          height: 55,
-          child: FloatingActionButton.extended(
-            backgroundColor: AppTheme.primaryColor,
-            elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            label: _isLoading 
-              ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-              : const Text("SIMPAN PEMBELIAN", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-            onPressed: _isLoading ? null : _savePurchase,
-          ),
-        ),
-      ),
+      floatingActionButton: _SavePurchaseFAB(isLoading: _isLoading, onSave: _savePurchase),
     );
   }
 
+  void _showProductPicker() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => _ProductPickerSheet(
+        products: _availableProducts,
+        onSelected: (p) => setState(() => _addProductToCart(p)),
+      ),
+    );
+  }
+}
 
+class _PurchaseSummaryHeader extends StatelessWidget {
+  final int itemCount;
+  final int total;
+  const _PurchaseSummaryHeader({required this.itemCount, required this.total});
 
-  Widget _buildForm() {
+  @override
+  Widget build(BuildContext context) {
+    final fmt = NumberFormat.currency(locale: 'id', symbol: 'Rp ', decimalDigits: 0);
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.topCenter,
+      children: [
+        Container(
+          width: double.infinity, height: 50, 
+          decoration: const BoxDecoration(
+            gradient: AppTheme.defaultGradient,
+            borderRadius: BorderRadius.only(bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30)),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: Container(
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            decoration: BoxDecoration(
+              color: Colors.white, borderRadius: BorderRadius.circular(20),
+              boxShadow: [BoxShadow(color: const Color(0xFF1E3A8A).withValues(alpha: 0.15), blurRadius: 20, offset: const Offset(0, 10))],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Total Pembelian", style: TextStyle(fontSize: 14, color: Colors.grey, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 4),
+                    Row(children: [
+                      const Icon(Icons.receipt_long_rounded, size: 16, color: AppTheme.primaryColor),
+                      const SizedBox(width: 5),
+                      Text("$itemCount Item", style: const TextStyle(fontSize: 12, color: AppTheme.primaryColor, fontWeight: FontWeight.bold)),
+                    ])
+                  ],
+                ),
+                Text(fmt.format(total), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: AppTheme.primaryColor)),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PurchaseFormSection extends StatelessWidget {
+  final TextEditingController supplierCtrl;
+  final TextEditingController notesCtrl;
+  const _PurchaseFormSection({required this.supplierCtrl, required this.notesCtrl});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)),
       child: Column(
         children: [
           TextField(
-            controller: _supplierController,
-            decoration: InputDecoration(
-              labelText: "Nama Supplier",
-              prefixIcon: const Icon(Icons.business_rounded),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            ),
+            controller: supplierCtrl,
+            decoration: InputDecoration(labelText: "Nama Supplier", prefixIcon: const Icon(Icons.business_rounded), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
           ),
           const SizedBox(height: 16),
           TextField(
-            controller: _notesController,
-            decoration: InputDecoration(
-              labelText: "Keterangan / Catatan",
-              prefixIcon: const Icon(Icons.note_alt_outlined),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            ),
+            controller: notesCtrl,
+            decoration: InputDecoration(labelText: "Keterangan", prefixIcon: const Icon(Icons.note_alt_outlined), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildCartItem(int index, PembelianItem item) {
+class _CartHeader extends StatelessWidget {
+  final VoidCallback onAddPressed;
+  const _CartHeader({required this.onAddPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text("Daftar Barang", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        TextButton.icon(
+          onPressed: onAddPressed,
+          icon: const Icon(Icons.add_circle_outline),
+          label: const Text("Pilih Barang"),
+          style: TextButton.styleFrom(foregroundColor: AppTheme.primaryColor),
+        ),
+      ],
+    );
+  }
+}
+
+class _EmptyCartPlaceholder extends StatelessWidget {
+  const _EmptyCartPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(30),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)),
+      child: Column(children: [
+        Icon(Icons.shopping_basket_outlined, size: 50, color: Colors.grey.shade400),
+        const SizedBox(height: 10),
+        Text("Belum ada barang dipilih", style: TextStyle(color: Colors.grey.shade600)),
+      ]),
+    );
+  }
+}
+
+class _PurchaseItemRow extends StatefulWidget {
+  final PembelianItem item;
+  final VoidCallback onDelete;
+  final ValueChanged<PembelianItem> onUpdate;
+  const _PurchaseItemRow({super.key, required this.item, required this.onDelete, required this.onUpdate});
+
+  @override
+  State<_PurchaseItemRow> createState() => _PurchaseItemRowState();
+}
+
+class _PurchaseItemRowState extends State<_PurchaseItemRow> {
+  late TextEditingController _qtyCtrl;
+  late TextEditingController _priceCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _qtyCtrl = TextEditingController(text: widget.item.jumlah.toString());
+    _priceCtrl = TextEditingController(text: widget.item.hargaBeli.toString());
+  }
+
+  @override
+  void dispose() {
+    _qtyCtrl.dispose();
+    _priceCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -263,202 +330,126 @@ class _PurchasePageState extends State<PurchasePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.productName ?? "Produk", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text(widget.item.productName ?? "Produk", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("Jumlah", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                          const SizedBox(height: 4),
-                          Container(
-                            height: 40,
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
-                            child: TextField(
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(border: InputBorder.none),
-                              onChanged: (v) {
-                                int? val = int.tryParse(v);
-                                if (val != null) {
-                                  setState(() {
-                                    _cart[index] = PembelianItem(
-                                      productId: item.productId,
-                                      productName: item.productName,
-                                      jumlah: val,
-                                      hargaBeli: item.hargaBeli,
-                                    );
-                                  });
-                                }
-                              },
-                              controller: TextEditingController(text: item.jumlah.toString())..selection = TextSelection.fromPosition(TextPosition(offset: item.jumlah.toString().length)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 15),
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("Harga Beli", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                          const SizedBox(height: 4),
-                          Container(
-                            height: 40,
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
-                            child: TextField(
-                              keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(border: InputBorder.none, prefixText: "Rp "),
-                              onChanged: (v) {
-                                int? val = int.tryParse(v);
-                                if (val != null) {
-                                  setState(() {
-                                    _cart[index] = PembelianItem(
-                                      productId: item.productId,
-                                      productName: item.productName,
-                                      jumlah: item.jumlah,
-                                      hargaBeli: val,
-                                    );
-                                  });
-                                }
-                              },
-                              controller: TextEditingController(text: item.hargaBeli.toString())..selection = TextSelection.fromPosition(TextPosition(offset: item.hargaBeli.toString().length)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                Row(children: [
+                  Expanded(child: _ItemInputField(label: "Qty", controller: _qtyCtrl, onSubmitted: (v) => _update())),
+                  const SizedBox(width: 15),
+                  Expanded(flex: 2, child: _ItemInputField(label: "Harga Beli", controller: _priceCtrl, prefix: "Rp ", onSubmitted: (v) => _update())),
+                ]),
               ],
             ),
           ),
-          IconButton(onPressed: () => setState(() => _cart.removeAt(index)), icon: const Icon(Icons.delete_outline, color: Colors.red)),
+          IconButton(onPressed: widget.onDelete, icon: const Icon(Icons.delete_outline, color: Colors.red)),
         ],
       ),
     );
   }
 
-  Widget _buildTotalSummary() {
+  void _update() {
+    widget.onUpdate(PembelianItem(
+      productId: widget.item.productId,
+      productName: widget.item.productName,
+      jumlah: int.tryParse(_qtyCtrl.text) ?? widget.item.jumlah,
+      hargaBeli: int.tryParse(_priceCtrl.text) ?? widget.item.hargaBeli,
+    ));
+  }
+}
+
+class _ItemInputField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final String? prefix;
+  final ValueChanged<String> onSubmitted;
+  const _ItemInputField({required this.label, required this.controller, this.prefix, required this.onSubmitted});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        const SizedBox(height: 4),
+        Container(
+          height: 40, padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
+          child: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            onSubmitted: onSubmitted,
+            decoration: InputDecoration(border: InputBorder.none, prefixText: prefix, isDense: true),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SavePurchaseFAB extends StatelessWidget {
+  final bool isLoading;
+  final VoidCallback onSave;
+  const _SavePurchaseFAB({required this.isLoading, required this.onSave});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: SizedBox(
+        width: double.infinity, height: 55,
+        child: FloatingActionButton.extended(
+          backgroundColor: AppTheme.primaryColor, elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          label: isLoading 
+            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+            : const Text("SIMPAN PEMBELIAN", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+          onPressed: isLoading ? null : onSave,
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductPickerSheet extends StatefulWidget {
+  final List<Barang> products;
+  final ValueChanged<Barang> onSelected;
+  const _ProductPickerSheet({required this.products, required this.onSelected});
+
+  @override
+  State<_ProductPickerSheet> createState() => _ProductPickerSheetState();
+}
+
+class _ProductPickerSheetState extends State<_ProductPickerSheet> {
+  String _search = "";
+  @override
+  Widget build(BuildContext context) {
+    final filtered = widget.products.where((p) => p.nama.toLowerCase().contains(_search.toLowerCase())).toList();
     return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      // transform removed, handled by parent Stack
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1E3A8A).withOpacity(0.15), // Deep blue shadow
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Total Pembelian",
-                style: TextStyle(
-                  fontSize: 14, 
-                  color: Colors.grey, 
-                  fontWeight: FontWeight.w600
-                ),
+      height: MediaQuery.sizeOf(context).height * 0.7,
+      padding: const EdgeInsets.all(16),
+      child: Column(children: [
+        const Text("Pilih Barang", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 15),
+        TextField(
+          onChanged: (v) => setState(() => _search = v),
+          decoration: InputDecoration(hintText: "Cari produk...", prefixIcon: const Icon(Icons.search), filled: true, fillColor: Colors.grey.shade100, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
+        ),
+        const SizedBox(height: 10),
+        Expanded(
+          child: filtered.isEmpty ? const Center(child: Text("Produk tidak ditemukan"))
+          : ListView.builder(
+              itemCount: filtered.length,
+              itemBuilder: (ctx, i) => ListTile(
+                leading: const CircleAvatar(backgroundColor: AppTheme.primaryColor, child: Icon(Icons.inventory_2_outlined, color: Colors.white, size: 20)),
+                title: Text(filtered[i].nama, style: const TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text("Stok: ${filtered[i].stok}"),
+                onTap: () {
+                  widget.onSelected(filtered[i]);
+                  Navigator.pop(context);
+                },
               ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  const Icon(Icons.receipt_long_rounded, size: 16, color: AppTheme.primaryColor),
-                  const SizedBox(width: 5),
-                  Text(
-                    "${_cart.length} Item",
-                    style: const TextStyle(fontSize: 12, color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              )
-            ],
-          ),
-          Text(
-            currencyFormatter.format(_totalBiaya), 
-            style: const TextStyle(
-              fontSize: 24, 
-              fontWeight: FontWeight.w800, 
-              color: AppTheme.primaryColor
-            )
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showProductPicker() {
-    String search = "";
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) {
-          final filtered = _availableProducts.where((p) => p.nama.toLowerCase().contains(search.toLowerCase())).toList();
-          return Container(
-            height: MediaQuery.of(context).size.height * 0.7,
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                const Text("Pilih Barang", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 15),
-                TextField(
-                  onChanged: (v) => setModalState(() => search = v),
-                  decoration: InputDecoration(
-                    hintText: "Cari produk...",
-                    prefixIcon: const Icon(Icons.search),
-                    filled: true,
-                    fillColor: Colors.grey.shade100,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Expanded(
-                  child: filtered.isEmpty
-                      ? const Center(child: Text("Produk tidak ditemukan"))
-                      : ListView.builder(
-                          itemCount: filtered.length,
-                          itemBuilder: (context, index) {
-                            final p = filtered[index];
-                            return ListTile(
-                              leading: const CircleAvatar(backgroundColor: AppTheme.primaryColor, child: Icon(Icons.inventory_2_outlined, color: Colors.white, size: 20)),
-                              title: Text(p.nama, style: const TextStyle(fontWeight: FontWeight.bold)),
-                              subtitle: Text("Stok saat ini: ${p.stok}"),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.add_circle, color: AppTheme.primaryColor),
-                                onPressed: () {
-                                  _addProductToCart(p);
-                                  Navigator.pop(context);
-                                },
-                              ),
-                              onTap: () {
-                                _addProductToCart(p);
-                                Navigator.pop(context);
-                              },
-                            );
-                          },
-                        ),
-                ),
-              ],
             ),
-          );
-        },
-      ),
+        ),
+      ]),
     );
   }
 }

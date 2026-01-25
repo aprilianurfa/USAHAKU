@@ -44,6 +44,8 @@ class ApiClient {
           
           final etag = response.headers.value('etag');
           if (etag != null) {
+            // Prevent cache from growing indefinitely
+            if (_etagCache.length > 50) _etagCache.clear();
             _etagCache[cacheKey] = etag;
           }
 
@@ -55,6 +57,7 @@ class ApiClient {
             }
           } else if (response.statusCode == 200) {
             // Save fresh data to cache
+            if (_dataCache.length > 50) _dataCache.clear();
             _dataCache[cacheKey] = response.data;
           }
         }

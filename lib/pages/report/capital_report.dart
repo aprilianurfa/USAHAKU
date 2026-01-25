@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../services/report_service.dart';
-import '../../services/report_service.dart';
 import '../../core/theme.dart';
-import '../../widgets/app_drawer.dart';
+import 'package:usahaku_main/core/app_shell.dart';
 
 class CapitalReportPage extends StatefulWidget {
   const CapitalReportPage({super.key});
@@ -20,8 +19,11 @@ class _CapitalReportPageState extends State<CapitalReportPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => AppShell.of(context).toggleSidebar(),
+        ),
         title: const Text("Analisa Modal & Aset", style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         flexibleSpace: Container(

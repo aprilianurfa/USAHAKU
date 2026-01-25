@@ -71,7 +71,7 @@ class TransactionService {
   Future<List<String>> getCustomerNames() async {
     try {
       final response = await _dio.get('/transactions/customers');
-      if (response.statusCode == 200 || response.statusCode == 304) {
+      if ((response.statusCode == 200 || response.statusCode == 304) && response.data is List) {
         return List<String>.from(response.data);
       }
       return [];

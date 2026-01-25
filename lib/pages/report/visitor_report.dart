@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../services/report_service.dart';
 import '../../core/theme.dart';
-import '../../widgets/app_drawer.dart';
+import 'package:usahaku_main/core/app_shell.dart';
 
 class VisitorReportPage extends StatefulWidget {
-  const VisitorReportPage({Key? key}) : super(key: key);
+  const VisitorReportPage({super.key});
 
   @override
   State<VisitorReportPage> createState() => _VisitorReportPageState();
@@ -61,13 +61,16 @@ class _VisitorReportPageState extends State<VisitorReportPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => AppShell.of(context).toggleSidebar(),
+        ),
         flexibleSpace: Container(decoration: const BoxDecoration(gradient: AppTheme.defaultGradient)),
         title: const Text('Laporan Pelanggan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         centerTitle: true,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        foregroundColor: Colors.white,
       ),
       body: Column(
         children: [

@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'dart:ui'; // For BackdropFilter
-import 'dart:io';
+import 'dart:ui';
 import 'package:image_picker/image_picker.dart';
 import '../../core/theme.dart';
 import '../../services/auth_service.dart';
 import '../../models/user_model.dart';
 import '../../config/constants.dart';
-
+import '../../core/widgets/keyboard_spacer.dart';
+import 'package:usahaku_main/core/view_metrics.dart';
+import 'package:usahaku_main/core/app_shell.dart';
 import '../settings/employee_list_page.dart';
-import '../../widgets/app_drawer.dart';
 import 'security_page.dart';
 import 'help_page.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  const ProfilePage({super.key});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -23,36 +23,7 @@ class _ProfilePageState extends State<ProfilePage> {
   final AuthService _authService = AuthService();
   bool _isLoading = true;
   UserModel? _user;
-  
-  // Custom Colors
-  // final Color _royalBlue = const Color(0xFF1A46BE); // Removed hardcoded
-  final Color _bgGrey = const Color(0xFFF8F9FE);
-  
   String? _shopLogo;
-
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    
-    if (image != null) {
-      if (!mounted) return;
-      setState(() => _isLoading = true);
-      
-      final result = await _authService.uploadShopLogo(image.path);
-      
-      if (mounted) {
-        setState(() => _isLoading = false);
-        if (result['logoUrl'] != null) {
-          // Backend returns 'uploads/filename.jpg'. We need to fetch profile again or just update state
-          // Assume fetching profile is safer to get full sync
-          _fetchProfile();
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Foto Profil Berhasil Diupdate")));
-        } else {
-           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result['error'] ?? "Gagal upload")));
-        }
-      }
-    }
-  }
 
   @override
   void initState() {
@@ -62,223 +33,65 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadCachedProfile() async {
-    final name = await _authService.getUserName();
-    final email = await _authService.getUserEmail(); // New method
-    final role = await _authService.getRole();
-    final shopId = await _authService.getShopId();
-    final userId = await _authService.getUserId(); // New method
-    final logo = await _authService.getShopLogo();
+    final results = await Future.wait([
+      _authService.getUserName(),
+      _authService.getUserEmail(),
+      _authService.getRole(),
+      _authService.getShopId(),
+      _authService.getUserId(),
+      _authService.getShopLogo(),
+    ]);
 
-    if (name != null && mounted) {
+    if (results[0] != null && mounted) {
       setState(() {
         _user = UserModel(
-          id: userId != null ? int.tryParse(userId) ?? 0 : 0,
-          nama: name,
-          email: email ?? "", // Might be null for legacy sessions
-          role: role,
-          shopId: shopId != null ? int.tryParse(shopId) : null,
+          id: int.tryParse(results[4] ?? '0') ?? 0,
+          nama: results[0] as String,
+          email: results[1] as String? ?? "",
+          role: results[2] as String?,
+          shopId: int.tryParse(results[3] ?? ''),
         );
-        _shopLogo = logo;
-        _isLoading = false; // Show cached content immediately
+        _shopLogo = results[5] as String?;
+        _isLoading = false;
       });
     }
   }
 
   void _fetchProfile() async {
-    // Only show loading if we have no data yet
-    if (_user == null) {
-      setState(() => _isLoading = true);
-    }
-    
     final data = await _authService.getProfile();
-    
-    if (data != null && data['error'] == null) {
-      if (mounted) {
-        setState(() {
-          _user = UserModel.fromJson(data);
-          if (data['Shop'] != null && data['Shop']['logo'] != null) {
-             _shopLogo = data['Shop']['logo'];
-          }
-          // Also update cache if API call succeeds
-          if (_user != null) {
-             // We could update cache here but AuthService typically updates only on login
-             // Ideally we should update cache here too for next time
-          }
-          _isLoading = false;
-        });
-      }
-    } else {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        // Only show error if we also failed to load cache
-        if (_user == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(data?['error'] ?? 'Gagal memuat profil')),
-            );
+    if (data is Map<String, dynamic> && data['error'] == null && mounted) {
+      setState(() {
+        _user = UserModel.fromJson(data);
+        if (data['Shop'] != null && data['Shop'] is Map && data['Shop']['logo'] != null) {
+          _shopLogo = data['Shop']['logo'];
         }
-      }
+        _isLoading = false;
+      });
+    } else if (mounted) {
+      setState(() => _isLoading = false);
     }
   }
 
-  void _logout() async {
-    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null && mounted) {
+      setState(() => _isLoading = true);
+      await _authService.uploadShopLogo(image.path);
+      _fetchProfile();
+    }
   }
 
   void _showEditProfileSheet() {
-    final nameCtrl = TextEditingController(text: _user?.nama);
-    final emailCtrl = TextEditingController(text: _user?.email);
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-        ),
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 50, // Increased from 20 to 50
-          top: 25,
-          left: 25,
-          right: 25,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              "Edit Profil",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primaryColor,
-              ),
-            ),
-            const SizedBox(height: 20),
-            
-            // Image Upload in Edit Sheet
-            Center(
-              child: Stack(
-                alignment: Alignment.bottomRight,
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.grey.shade200,
-                    backgroundImage: _shopLogo != null 
-                      ? NetworkImage("${AppConstants.imageBaseUrl}$_shopLogo") 
-                      : null,
-                    child: _shopLogo == null 
-                      ? Text(
-                          _user?.nama != null && _user!.nama.isNotEmpty ? _user!.nama[0].toUpperCase() : "U",
-                          style: TextStyle(fontSize: 40, color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
-                        )
-                      : null,
-                  ),
-                  InkWell(
-                    onTap: () {
-                      Navigator.pop(ctx); // Close sheet to pick image to avoid context issues or just pick
-                      _pickImage();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                        color: AppTheme.primaryColor,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 30),
-            
-            // Nama Input
-            const Text("Nama Lengkap", style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black54)),
-            const SizedBox(height: 8),
-            TextField(
-              controller: nameCtrl,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.person_outline),
-                hintText: "Masukkan nama Anda",
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Email Input
-            const Text("Email", style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black54)),
-            const SizedBox(height: 8),
-            TextField(
-              controller: emailCtrl,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.email_outlined),
-                hintText: "email@contoh.com",
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
-                ),
-              ),
-            ),
-            
-            const SizedBox(height: 30),
-            
-            // Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      side: BorderSide(color: Colors.grey.shade400),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text("Batal", style: TextStyle(color: Colors.black)),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      Navigator.pop(ctx);
-                      final result = await _authService.updateProfile(nameCtrl.text, emailCtrl.text);
-                      if (result != null && result['error'] == null) {
-                        _fetchProfile();
-                        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Profil diperbarui")));
-                      } else {
-                         if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(result?['error'] ?? "Gagal update")));
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text("Simpan Perubahan", style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+      builder: (ctx) => _EditProfileSheet(
+        user: _user,
+        logo: _shopLogo,
+        onPickImage: _pickImage,
+        onSaved: _fetchProfile,
       ),
     );
   }
@@ -286,254 +99,252 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bgGrey,
-      drawer: const AppDrawer(),
+      backgroundColor: AppTheme.backgroundColor,
+      resizeToAvoidBottomInset: false, // MANDATORY
       appBar: AppBar(
-        title: const Text("Profil Pengguna", style: TextStyle(fontWeight: FontWeight.bold)),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: AppTheme.defaultGradient,
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => AppShell.of(context).toggleSidebar(),
         ),
+        title: const Text("Profil Saya", style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(decoration: const BoxDecoration(gradient: AppTheme.defaultGradient)),
         foregroundColor: Colors.white,
+        elevation: 0,
       ),
-      body: SingleChildScrollView(
+      body: _user == null ? const Center(child: CircularProgressIndicator()) : SingleChildScrollView(
         child: Column(
           children: [
-            _buildProfileInfoSection(),
+            _ProfileHeader(user: _user, logo: _shopLogo, isLoading: _isLoading),
             const SizedBox(height: 60), 
-            if (_isLoading)
-              const Padding(
-                padding: EdgeInsets.only(top: 50),
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else ...[
-              _buildMenuList(),
-              const SizedBox(height: 30),
-              _buildLogoutButton(),
-              const SizedBox(height: 40),
-            ],
+            _ProfileMenu(user: _user, onEdit: _showEditProfileSheet),
+            const SizedBox(height: 30),
+            _LogoutButton(onLogout: _logout),
+            const SizedBox(height: 40),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildProfileInfoSection() {
-    return Stack(
-      clipBehavior: Clip.none,
-      alignment: Alignment.center,
-      children: [
-        Container(
-          height: 250,  // Adjusted height since AppBar takes top space
-          width: double.infinity,
-          decoration: const BoxDecoration(
-            gradient: AppTheme.defaultGradient,
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(30),
-              bottomRight: Radius.circular(30),
-            ),
-          ),
-          child: Column(
-            children: [
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.grey.shade200,
-                    backgroundImage: _shopLogo != null 
-                      ? NetworkImage("${AppConstants.imageBaseUrl}$_shopLogo") 
-                      : null,
-                    child: _isLoading 
-                      ? _skeletonBox(40, 40, radius: 20, isDark: false)
-                      : (_shopLogo == null 
-                          ? Text(
-                              _user?.nama != null && _user!.nama.isNotEmpty ? _user!.nama[0].toUpperCase() : "U",
-                              style: TextStyle(fontSize: 40, color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
-                            )
-                          : null),
-                  ),
-              ),
-              const SizedBox(height: 12),
-              _isLoading
-                ? _skeletonBox(150, 24, radius: 12, isDark: false)
-                : Text(
-                    _user?.nama ?? "",
-                    style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-              const SizedBox(height: 8),
-              _isLoading
-                ? _skeletonBox(180, 16, radius: 8, isDark: false)
-                : Text(
-                    _user?.email ?? "",
-                    style: const TextStyle(fontSize: 14, color: Colors.white70),
-                  ),
-            ],
-          ),
-        ),
-
-        Positioned(
-          bottom: -40,
-          left: 24,
-          right: 24,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.8),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white.withOpacity(0.6)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildInfoItem("Status Akun", _user?.role == 'owner' ? "Owner" : "Karyawan"),
-                    Container(height: 30, width: 1, color: Colors.grey.shade300),
-                    _buildInfoItem("Bergabung", "Jan 2026"),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInfoItem(String title, String value) {
-    return Column(
-      children: [
-        Text(title, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-        const SizedBox(height: 6),
-        _isLoading
-          ? _skeletonBox(80, 18, radius: 6)
-          : Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
-      ],
-    );
-  }
-
-  Widget _buildMenuList() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        children: [
-          _menuTile("Edit Profil", Icons.person_outline, onTap: _showEditProfileSheet),
-          const Divider(height: 1, indent: 20, endIndent: 20),
-          
-          if (_user?.role == 'owner') ...[
-            _menuTile("Daftar Karyawan", Icons.groups_outlined, onTap: () {
-              // Hapus 'const' di sini karena EmployeeListPage mungkin tidak const atau kita ingin fleksibel
-              Navigator.push(context, MaterialPageRoute(builder: (_) => EmployeeListPage()));
-            }),
-            const Divider(height: 1, indent: 20, endIndent: 20),
-          ],
-
-          _menuTile("Keamanan", Icons.lock_outline, onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityPage()));
-          }),
-           const Divider(height: 1, indent: 20, endIndent: 20),
-          _menuTile("Bantuan & Dukungan", Icons.help_outline, onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpPage()));
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _menuTile(String title, IconData icon, {VoidCallback? onTap}) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppTheme.primaryColor.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, color: AppTheme.primaryColor, size: 22),
-      ),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-      trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-    );
-  }
-
-  void _confirmLogout() {
+  void _logout() {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Konfirmasi Logout'),
         content: const Text('Apakah anda yakin ingin keluar dari aplikasi?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              _logout();
-            },
-            child: const Text('Ya, Keluar', style: TextStyle(color: Colors.red)),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/login', (r) => false), child: const Text('Ya', style: TextStyle(color: Colors.red))),
         ],
       ),
     );
   }
+}
 
-  Widget _buildLogoutButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: TextButton(
-        onPressed: _confirmLogout,
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          backgroundColor: const Color(0xFFFFECEC),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+class _ProfileHeader extends StatelessWidget {
+  final UserModel? user;
+  final String? logo;
+  final bool isLoading;
+  const _ProfileHeader({this.user, this.logo, required this.isLoading});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.center,
+      children: [
+        Container(
+          height: 250, width: double.infinity,
+          decoration: const BoxDecoration(gradient: AppTheme.defaultGradient, borderRadius: BorderRadius.only(bottomLeft: Radius.circular(30), bottomRight: Radius.circular(30))),
+          child: Column(children: [
+            const SizedBox(height: 10),
+            Container(padding: const EdgeInsets.all(4), decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+              child: CircleAvatar(radius: 50, backgroundColor: Colors.grey.shade200, 
+                  backgroundImage: logo != null ? NetworkImage("${AppConstants.imageBaseUrl}$logo") : null,
+                  child: isLoading ? const CircularProgressIndicator() : (logo == null ? Text(user?.nama.isNotEmpty == true ? user!.nama[0].toUpperCase() : "U", style: const TextStyle(fontSize: 40, color: AppTheme.primaryColor, fontWeight: FontWeight.bold)) : null),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(user?.nama ?? "", style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text(user?.email ?? "", style: const TextStyle(fontSize: 14, color: Colors.white70)),
+          ]),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(Icons.logout, color: Colors.red),
-            SizedBox(width: 10),
-            Text("Keluar Aplikasi", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 16)),
-          ],
+        Positioned(
+          bottom: -40, left: 24, right: 24,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white, 
+              borderRadius: BorderRadius.circular(20), 
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 5))],
+              border: Border.all(color: Colors.white.withValues(alpha: 0.2))
+            ),
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+              _InfoItem(title: "Status Akun", value: user?.role == 'owner' ? "Owner" : "Karyawan"),
+              Container(height: 30, width: 1, color: Colors.grey.shade300),
+              const _InfoItem(title: "Bergabung", value: "Jan 2026"),
+            ]),
+          ),
         ),
+      ],
+    );
+  }
+}
+
+class _InfoItem extends StatelessWidget {
+  final String title;
+  final String value;
+  const _InfoItem({required this.title, required this.value});
+  @override
+  Widget build(BuildContext context) {
+    return Column(children: [
+      Text(title, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+      const SizedBox(height: 6),
+      Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+    ]);
+  }
+}
+
+class _ProfileMenu extends StatelessWidget {
+  final UserModel? user;
+  final VoidCallback onEdit;
+  const _ProfileMenu({this.user, required this.onEdit});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+      child: Column(children: [
+        _MenuTile("Edit Profil", Icons.person_outline, onTap: onEdit),
+        if (user?.role == 'owner') ...[
+          const Divider(height: 1, indent: 20, endIndent: 20),
+          _MenuTile("Daftar Karyawan", Icons.groups_outlined, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EmployeeListPage()))),
+        ],
+        const Divider(height: 1, indent: 20, endIndent: 20),
+        _MenuTile("Keamanan", Icons.lock_outline, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SecurityPage()))),
+        const Divider(height: 1, indent: 20, endIndent: 20),
+        _MenuTile("Bantuan & Dukungan", Icons.help_outline, onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpPage()))),
+      ]),
+    );
+  }
+}
+
+class _MenuTile extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final VoidCallback? onTap;
+  const _MenuTile(this.title, this.icon, {this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: AppTheme.primaryColor.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)), child: Icon(icon, color: AppTheme.primaryColor, size: 22)),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+      trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+    );
+  }
+}
+
+class _LogoutButton extends StatelessWidget {
+  final VoidCallback onLogout;
+  const _LogoutButton({required this.onLogout});
+  @override
+  Widget build(BuildContext context) {
+    return Padding(padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: TextButton(onPressed: onLogout, style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), backgroundColor: const Color(0xFFFFECEC), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+        child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.logout, color: Colors.red), SizedBox(width: 10), Text("Keluar Aplikasi", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 16))]),
+      ),
+    );
+  }
+}
+
+class _EditProfileSheet extends StatefulWidget {
+  final UserModel? user;
+  final String? logo;
+  final VoidCallback onPickImage;
+  final VoidCallback onSaved;
+  const _EditProfileSheet({this.user, this.logo, required this.onPickImage, required this.onSaved});
+
+  @override
+  State<_EditProfileSheet> createState() => _EditProfileSheetState();
+}
+
+class _EditProfileSheetState extends State<_EditProfileSheet> {
+  late TextEditingController nameCtrl;
+  late TextEditingController emailCtrl;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    nameCtrl = TextEditingController(text: widget.user?.nama);
+    emailCtrl = TextEditingController(text: widget.user?.email);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+      padding: const EdgeInsets.all(25),
+      child: SingleChildScrollView(
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10)))),
+          const SizedBox(height: 20),
+          const Text("Edit Profil", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.primaryColor)),
+          const SizedBox(height: 20),
+          Center(
+            child: Stack(alignment: Alignment.bottomRight, children: [
+              CircleAvatar(radius: 50, backgroundColor: Colors.grey.shade200, backgroundImage: widget.logo != null ? NetworkImage("${AppConstants.imageBaseUrl}${widget.logo}") : null,
+                child: widget.logo == null ? Text(widget.user?.nama.isNotEmpty == true ? widget.user!.nama[0].toUpperCase() : "U", style: const TextStyle(fontSize: 40, color: AppTheme.primaryColor, fontWeight: FontWeight.bold)) : null,
+              ),
+              InkWell(onTap: widget.onPickImage, child: Container(padding: const EdgeInsets.all(8), decoration: const BoxDecoration(color: AppTheme.primaryColor, shape: BoxShape.circle), child: const Icon(Icons.camera_alt, color: Colors.white, size: 20))),
+            ]),
+          ),
+          const SizedBox(height: 30),
+          _EditField(label: "Nama Lengkap", controller: nameCtrl, icon: Icons.person_outline),
+          const SizedBox(height: 16),
+          _EditField(label: "Email", controller: emailCtrl, icon: Icons.email_outlined),
+          const SizedBox(height: 30),
+          Row(children: [
+            Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(context), style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text("Batal", style: TextStyle(color: Colors.black)))),
+            const SizedBox(width: 12),
+            Expanded(child: ElevatedButton(onPressed: _isSaving ? null : _save, style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: _isSaving ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white)) : const Text("Simpan", style: TextStyle(fontWeight: FontWeight.bold)))),
+          ]),
+          KeyboardSpacer(extraPadding: 40),
+        ]),
       ),
     );
   }
 
-  Widget _skeletonBox(double width, double height, {double radius = 8, bool isDark = true}) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0.3, end: 0.6),
-      duration: const Duration(milliseconds: 1000),
-      curve: Curves.easeInOut,
-      builder: (context, value, child) {
-        return Opacity(
-          opacity: value,
-          child: Container(
-            width: width,
-            height: height,
-            decoration: BoxDecoration(
-              color: isDark ? Colors.grey.shade300 : Colors.white.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(radius),
-            ),
-          ),
-        );
-      },
-    );
+  void _save() async {
+    setState(() => _isSaving = true);
+    final res = await AuthService().updateProfile(nameCtrl.text, emailCtrl.text);
+    if (mounted) {
+       setState(() => _isSaving = false);
+       if (res != null && res['error'] == null) {
+          widget.onSaved();
+          Navigator.pop(context);
+       }
+    }
+  }
+}
+
+class _EditField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final IconData icon;
+  const _EditField({required this.label, required this.controller, required this.icon});
+  @override
+  Widget build(BuildContext context) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black54)),
+        const SizedBox(height: 8),
+        TextField(controller: controller, decoration: InputDecoration(prefixIcon: Icon(icon), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
+    ]);
   }
 }
